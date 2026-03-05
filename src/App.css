@@ -107,8 +107,8 @@
     background: var(--bg-card);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
-    padding: 24px;
-    gap: 16px;
+    padding: 16px;
+    gap: 4px;
     overflow: hidden;
 }
 
@@ -180,7 +180,8 @@
     font-weight: 900;
     letter-spacing: 4px;
     text-align: center;
-    padding: 8px 0;
+    padding: 0;
+    margin-top: -8px;
 }
 
 .word-display .first-letter {
@@ -745,16 +746,18 @@
     padding: 8px 0;
 }
 
-/* ===== Responsive for non-target devices ===== */
-@media (max-width: 800px) {
+/* ===== Responsive: Tablet Portrait & Small Screens ===== */
+@media (max-width: 900px) {
     .learning-main {
         flex-direction: column;
         padding: 12px;
         overflow-y: auto;
+        gap: 12px;
     }
 
     .learning-left {
-        min-height: 300px;
+        min-height: 280px;
+        padding: 12px;
     }
 
     .learning-right {
@@ -762,7 +765,12 @@
     }
 
     .word-display {
-        font-size: 4rem;
+        font-size: 4.5rem;
+    }
+
+    .image-area img {
+        max-height: 80%;
+        max-width: 90%;
     }
 
     .app-header {
@@ -771,5 +779,165 @@
 
     .app-title {
         font-size: 1.2rem;
+    }
+
+    .start-btn {
+        font-size: 1.1rem;
+        padding: 12px 16px;
+    }
+}
+
+/* ===== Responsive: Phone (Galaxy S24 Ultra etc.) ===== */
+@media (max-width: 500px) {
+    .app-header {
+        padding: 8px 12px;
+    }
+
+    .app-title {
+        font-size: 1rem;
+    }
+
+    .header-btn {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+
+    .learning-main {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .learning-left {
+        min-height: 200px;
+        padding: 8px;
+        gap: 2px;
+        border-radius: var(--radius-lg);
+    }
+
+    .image-area img {
+        max-height: 85%;
+        max-width: 95%;
+        border: 3px solid var(--bg-main);
+    }
+
+    .word-display {
+        font-size: 3rem;
+        letter-spacing: 2px;
+        margin-top: -4px;
+    }
+
+    .learning-right {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+    }
+
+    .day-btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    .word-info-card {
+        padding: 12px;
+    }
+
+    .current-word-text {
+        font-size: 1.4rem;
+    }
+
+    .step-indicator .steps {
+        gap: 4px;
+    }
+
+    .step {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+
+    .start-btn {
+        font-size: 1rem;
+        padding: 10px 12px;
+    }
+
+    .start-btn .btn-emoji {
+        font-size: 1.2rem;
+    }
+
+    .btn-row {
+        gap: 6px;
+    }
+
+    .image-placeholder {
+        padding: 20px;
+        font-size: 1rem;
+    }
+
+    .image-placeholder .placeholder-emoji {
+        font-size: 2.5rem;
+    }
+
+    /* Admin page phone */
+    .admin-container {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .day-card {
+        padding: 12px;
+    }
+
+    .day-card-title {
+        font-size: 1.1rem;
+    }
+
+    .no-day-message {
+        padding: 24px;
+    }
+
+    .no-day-message .msg-emoji {
+        font-size: 2rem;
+    }
+
+    .no-day-message .msg-text {
+        font-size: 1rem;
+    }
+}
+
+/* ===== Phone Landscape ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+    .learning-main {
+        flex-direction: row;
+        padding: 8px;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    .learning-left {
+        padding: 8px;
+        gap: 2px;
+    }
+
+    .image-area img {
+        max-height: 70%;
+        max-width: 80%;
+    }
+
+    .word-display {
+        font-size: 2.5rem;
+    }
+
+    .app-header {
+        padding: 6px 12px;
+    }
+
+    .app-title {
+        font-size: 1rem;
+    }
+
+    .learning-right {
+        overflow-y: auto;
     }
 }
