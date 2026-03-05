@@ -847,12 +847,21 @@ function LogPage({ logs, setLogs, data, selectedYear, selectedMonth, handleYearC
   const currentKey = toKey(selectedYear, selectedMonth);
   const monthDays = data[currentKey] || [];
 
-  // 필터링된 로그
-  const filteredLogs = logs.filter(log => {
-    if (log.yearMonth !== currentKey) return false;
-    if (filterDay !== 'all' && log.dayName !== filterDay) return false;
-    return true;
-  }).reverse(); // 최신순
+  // 필터링된 로그 (원본 인덱스 포함)
+  const filteredLogs = logs
+    .map((log, origIdx) => ({ ...log, origIdx }))
+    .filter(log => {
+      if (log.yearMonth !== currentKey) return false;
+      if (filterDay !== 'all' && log.dayName !== filterDay) return false;
+      return true;
+    }).reverse(); // 최신순
+
+  const deleteOneLog = (origIdx) => {
+    const updated = logs.filter((_, i) => i !== origIdx);
+    setLogs(updated);
+    saveLogs(updated);
+    saveLogsToFirestore(updated);
+  };
 
   const clearLogs = () => {
     if (window.confirm('이 달의 로그를 모두 삭제하시겠습니까?')) {
@@ -933,6 +942,7 @@ function LogPage({ logs, setLogs, data, selectedYear, selectedMonth, handleYearC
               <span className="log-word">📗 {log.word}</span>
               <span className="log-day">{log.dayName}</span>
               <span className="log-time">{log.timestamp}</span>
+              <button className="log-delete-btn" onClick={() => deleteOneLog(log.origIdx)} title="삭제">✕</button>
             </div>
           ))}
         </div>
