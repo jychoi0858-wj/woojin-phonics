@@ -53,12 +53,28 @@ function saveData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-// ======================================================
+// 학습 로그: [{ timestamp, yearMonth, dayName, word }]
+const LOG_KEY = 'woojin-phonics-logs';
+
+function loadLogs() {
+  try {
+    const raw = localStorage.getItem(LOG_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { }
+  return [];
+}
+
+function saveLogs(logs) {
+  localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+}
 // 메인 App 컴포넌트
 // ======================================================
 function App() {
-  // 화면 전환: 'learning' | 'admin'
+  // 화면 전환: 'learning' | 'admin' | 'log'
   const [screen, setScreen] = useState('learning');
+
+  // 학습 로그
+  const [logs, setLogs] = useState(() => loadLogs());
 
   // 전체 데이터: { "YYYY-MM": [ {id, name, words} ] }
   const [data, setData] = useState(() => loadData());
@@ -248,8 +264,10 @@ function App() {
     }
   };
 
-  // ─── 학습 완료 마킹 ───
+  // ─── 학습 완료 마킹 + 로그 기록 ───
   const markWordLearned = (dayIdx, wordIdx) => {
+    const dayData = days[dayIdx];
+    const word = dayData?.words[wordIdx];
     setData(prev => {
       const arr = prev[currentKey] || [];
       return {
@@ -261,6 +279,20 @@ function App() {
         })
       };
     });
+    // 로그 기록
+    if (word) {
+      const logEntry = {
+        timestamp: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+        yearMonth: currentKey,
+        dayName: dayData.name,
+        word: word
+      };
+      setLogs(prev => {
+        const updated = [...prev, logEntry];
+        saveLogs(updated);
+        return updated;
+      });
+    }
   };
 
   // ─── 학습 시작 (선택된 Day의 모든 단어 순차 학습) ───
@@ -398,15 +430,22 @@ function App() {
           <span className="emoji">🍎</span>
           우진이 파닉스 선생님
         </div>
-        {screen === 'learning' ? (
-          <button className="header-btn admin" onClick={() => setScreen('admin')}>
-            📋 단어 관리
-          </button>
-        ) : (
-          <button className="header-btn home" onClick={() => setScreen('learning')}>
-            🏠 학습으로
-          </button>
-        )}
+        <div className="header-btns">
+          {screen === 'learning' ? (
+            <>
+              <button className="header-btn admin" onClick={() => setScreen('admin')}>
+                📋 단어 관리
+              </button>
+              <button className="header-btn log" onClick={() => setScreen('log')}>
+                📊 로그
+              </button>
+            </>
+          ) : (
+            <button className="header-btn home" onClick={() => setScreen('learning')}>
+              🏠 학습으로
+            </button>
+          )}
+        </div>
       </header>
 
       {/* ===== Learning Screen ===== */}
@@ -585,21 +624,36 @@ function App() {
             )}
           </aside>
         </main>
-      )}
+      )
+      }
 
       {/* ===== Admin Screen ===== */}
-      {screen === 'admin' && (
-        <AdminPage
-          days={days}
-          addDay={addDay}
-          removeDay={removeDay}
-          addWordToDay={addWordToDay}
-          removeWordFromDay={removeWordFromDay}
+      {
+        screen === 'admin' && (
+          <AdminPage
+            days={days}
+            addDay={addDay}
+            removeDay={removeDay}
+            addWordToDay={addWordToDay}
+            removeWordFromDay={removeWordFromDay}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            handleYearChange={handleYearChange}
+            handleMonthChange={handleMonthChange}
+            isPlaying={isPlaying}
+          />
+        )}
+
+      {/* ===== Log Screen ===== */}
+      {screen === 'log' && (
+        <LogPage
+          logs={logs}
+          setLogs={setLogs}
+          data={data}
           selectedYear={selectedYear}
           selectedMonth={selectedMonth}
           handleYearChange={handleYearChange}
           handleMonthChange={handleMonthChange}
-          isPlaying={isPlaying}
         />
       )}
 
@@ -607,7 +661,7 @@ function App() {
       <div className="build-footer">
         마지막 빌드: {BUILD_TIME}
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -690,6 +744,12 @@ function DayCard({ day, dayIdx, removeDay, addWordToDay, removeWordFromDay }) {
       <div className="day-card-header">
         <div className="day-card-title">
           📅 {day.name}
+          {day.words.length > 0 && (
+            <span className="day-card-progress">
+              ({(day.learnedWords || []).length}/{day.words.length}
+              {(day.learnedWords || []).length >= day.words.length ? ' ✅' : ''})
+            </span>
+          )}
         </div>
         <button className="delete-day-btn" onClick={() => removeDay(dayIdx)}>
           🗑️ 삭제
@@ -700,18 +760,21 @@ function DayCard({ day, dayIdx, removeDay, addWordToDay, removeWordFromDay }) {
         {day.words.length === 0 && (
           <div className="empty-words">아직 단어가 없어요. 아래에서 추가해 주세요!</div>
         )}
-        {day.words.map((word, wordIdx) => (
-          <div className="word-tag" key={wordIdx}>
-            {word}
-            <button
-              className="remove-word"
-              onClick={() => removeWordFromDay(dayIdx, wordIdx)}
-              title="삭제"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
+        {day.words.map((word, wordIdx) => {
+          const isLearned = (day.learnedWords || []).includes(wordIdx);
+          return (
+            <div className={`word-tag ${isLearned ? 'learned' : ''}`} key={wordIdx}>
+              {isLearned && '✅ '}{word}
+              <button
+                className="remove-word"
+                onClick={() => removeWordFromDay(dayIdx, wordIdx)}
+                title="삭제"
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       <div className="add-word-row">
@@ -728,6 +791,108 @@ function DayCard({ day, dayIdx, removeDay, addWordToDay, removeWordFromDay }) {
           추가
         </button>
       </div>
+    </div>
+  );
+}
+
+// ======================================================
+// 로그 페이지 컴포넌트
+// ======================================================
+function LogPage({ logs, setLogs, data, selectedYear, selectedMonth, handleYearChange, handleMonthChange }) {
+  const [filterDay, setFilterDay] = useState('all');
+
+  const currentKey = toKey(selectedYear, selectedMonth);
+  const monthDays = data[currentKey] || [];
+
+  // 필터링된 로그
+  const filteredLogs = logs.filter(log => {
+    if (log.yearMonth !== currentKey) return false;
+    if (filterDay !== 'all' && log.dayName !== filterDay) return false;
+    return true;
+  }).reverse(); // 최신순
+
+  const clearLogs = () => {
+    if (window.confirm('이 달의 로그를 모두 삭제하시겠습니까?')) {
+      const remaining = logs.filter(log => log.yearMonth !== currentKey);
+      setLogs(remaining);
+      saveLogs(remaining);
+    }
+  };
+
+  return (
+    <div className="admin-container">
+      {/* Year/Month selector */}
+      <div className="day-selector" style={{ marginBottom: 8 }}>
+        <div className="section-title">📅 년/월 선택</div>
+        <div className="ym-row">
+          <button className="ym-arrow" onClick={() => handleYearChange(selectedYear - 1)}>◀</button>
+          <span className="ym-label">{selectedYear}년</span>
+          <button className="ym-arrow" onClick={() => handleYearChange(selectedYear + 1)}>▶</button>
+        </div>
+        <div className="month-buttons">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+            <button
+              key={m}
+              className={`month-btn ${selectedMonth === m ? 'active' : ''}`}
+              onClick={() => { handleMonthChange(m); setFilterDay('all'); }}
+            >
+              {m}월
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Day filter */}
+      <div className="day-selector" style={{ marginBottom: 8 }}>
+        <div className="section-title">📚 Day 필터</div>
+        <div className="day-buttons">
+          <button
+            className={`day-btn ${filterDay === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterDay('all')}
+          >
+            전체
+          </button>
+          {monthDays.map((day, i) => (
+            <button
+              key={day.id || i}
+              className={`day-btn ${filterDay === day.name ? 'active' : ''}`}
+              onClick={() => setFilterDay(day.name)}
+            >
+              {day.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Log controls */}
+      <div className="admin-top-bar">
+        <span style={{ fontFamily: 'var(--font-kr)', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
+          📊 {filteredLogs.length}개 로그
+        </span>
+        {filteredLogs.length > 0 && (
+          <button className="delete-day-btn" onClick={clearLogs}>
+            🗑️ 이 달 로그 삭제
+          </button>
+        )}
+      </div>
+
+      {/* Log entries */}
+      {filteredLogs.length === 0 ? (
+        <div className="no-day-message">
+          <span className="msg-emoji">📭</span>
+          <span className="msg-text">학습 로그가 없습니다.</span>
+        </div>
+      ) : (
+        <div className="log-list">
+          {filteredLogs.map((log, i) => (
+            <div className="log-entry" key={i}>
+              <span className="log-word">📗 {log.word}</span>
+              <span className="log-day">{log.dayName}</span>
+              <span className="log-time">{log.timestamp}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

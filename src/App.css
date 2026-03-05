@@ -848,6 +848,65 @@
     padding: 8px 0;
 }
 
+/* Header Buttons Container */
+.header-btns {
+    display: flex;
+    gap: 6px;
+}
+
+/* Learned Word Tag */
+.word-tag.learned {
+    background: #C8E6C9;
+    border-color: #43A047;
+    color: #1B5E20;
+}
+
+/* Day Card Progress */
+.day-card-progress {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    font-weight: 400;
+    margin-left: 6px;
+}
+
+/* Log Page */
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    font-family: var(--font-kr);
+    font-size: 0.9rem;
+}
+
+.log-word {
+    font-weight: 700;
+    color: var(--color-text);
+    min-width: 120px;
+    font-family: var(--font-en);
+}
+
+.log-day {
+    color: var(--color-day-active);
+    font-weight: 600;
+    min-width: 60px;
+}
+
+.log-time {
+    color: var(--color-text-light);
+    font-size: 0.8rem;
+    margin-left: auto;
+}
+
 /* Build Footer */
 .build-footer {
     text-align: center;
