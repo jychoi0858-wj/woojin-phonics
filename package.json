@@ -15,6 +15,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "prebuild": "node -e \"require('fs').writeFileSync('.env.local','REACT_APP_BUILD_TIME='+new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+'\\n')\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
