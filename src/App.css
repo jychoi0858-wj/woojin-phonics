@@ -5,7 +5,8 @@
     display: flex;
     flex-direction: column;
     background: var(--bg-main);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* ===== Header ===== */
@@ -234,7 +235,7 @@
 /* Right Panel - Controls */
 .learning-right {
     width: 380px;
-    min-width: 280px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -768,12 +769,15 @@
     }
 
     .learning-left {
-        min-height: 280px;
+        min-height: 250px;
         padding: 12px;
+        flex: none;
     }
 
     .learning-right {
         width: 100%;
+        flex-shrink: 1;
+        padding-right: 0;
     }
 
     .word-display {
@@ -787,6 +791,7 @@
 
     .app-header {
         padding: 10px 16px;
+        min-height: 50px;
     }
 
     .app-title {
@@ -800,13 +805,14 @@
 }
 
 /* ===== Responsive: Phone (Galaxy S24 Ultra etc.) ===== */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
     .app-container {
         overflow-y: auto;
     }
 
     .app-header {
         padding: 8px 12px;
+        min-height: 44px;
     }
 
     .app-title {
@@ -823,10 +829,12 @@
         padding: 8px;
         gap: 8px;
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .learning-left {
         min-height: auto;
+        max-height: 45vh;
         padding: 8px;
         gap: 2px;
         border-radius: var(--radius-lg);
@@ -834,14 +842,14 @@
     }
 
     .learning-right {
-        width: 100% !important;
-        min-width: unset;
+        width: 100%;
+        flex-shrink: 1;
         gap: 8px;
         padding-right: 0;
     }
 
     .image-area {
-        max-height: 30vh;
+        max-height: 28vh;
     }
 
     .image-area img {
@@ -856,13 +864,12 @@
         margin-top: -4px;
     }
 
-    .learning-right {
-        width: 100%;
-        gap: 8px;
-    }
-
     .section-title {
         font-size: 0.9rem;
+    }
+
+    .day-selector {
+        padding: 12px;
     }
 
     .day-btn {
@@ -876,6 +883,10 @@
 
     .current-word-text {
         font-size: 1.4rem;
+    }
+
+    .step-indicator {
+        padding: 12px;
     }
 
     .step-indicator .steps {
@@ -909,6 +920,18 @@
         font-size: 2.5rem;
     }
 
+    .no-day-message {
+        padding: 20px;
+    }
+
+    .no-day-message .msg-emoji {
+        font-size: 2rem;
+    }
+
+    .no-day-message .msg-text {
+        font-size: 1rem;
+    }
+
     /* Admin page phone */
     .admin-container {
         padding: 12px;
@@ -922,52 +945,50 @@
     .day-card-title {
         font-size: 1.1rem;
     }
-
-    .no-day-message {
-        padding: 24px;
-    }
-
-    .no-day-message .msg-emoji {
-        font-size: 2rem;
-    }
-
-    .no-day-message .msg-text {
-        font-size: 1rem;
-    }
 }
 
 /* ===== Phone Landscape ===== */
 @media (max-height: 500px) and (orientation: landscape) {
+    .app-header {
+        padding: 4px 12px;
+        min-height: 36px;
+    }
+
+    .app-title {
+        font-size: 0.95rem;
+    }
+
     .learning-main {
-        flex-direction: row;
-        padding: 8px;
-        gap: 8px;
-        overflow: hidden;
+        flex-direction: column;
+        padding: 6px;
+        gap: 6px;
+        overflow-y: auto;
     }
 
     .learning-left {
-        padding: 8px;
+        flex: none;
+        max-height: 50vh;
+        padding: 6px;
         gap: 2px;
     }
 
+    .learning-right {
+        width: 100%;
+        flex-shrink: 1;
+        padding-right: 0;
+        overflow-y: auto;
+    }
+
+    .image-area {
+        max-height: 30vh;
+    }
+
     .image-area img {
-        max-height: 70%;
-        max-width: 80%;
+        max-height: 100%;
+        max-width: 60%;
     }
 
     .word-display {
         font-size: 2.5rem;
-    }
-
-    .app-header {
-        padding: 6px 12px;
-    }
-
-    .app-title {
-        font-size: 1rem;
-    }
-
-    .learning-right {
-        overflow-y: auto;
     }
 }
