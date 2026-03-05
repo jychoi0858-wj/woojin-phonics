@@ -249,6 +249,7 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
     padding: 20px;
+    overflow: hidden;
 }
 
 .section-title {
@@ -306,6 +307,7 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
     padding: 20px;
+    overflow: hidden;
 }
 
 .current-word-label {
@@ -489,6 +491,7 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
     padding: 16px 20px;
+    overflow: hidden;
 }
 
 .step-label {
