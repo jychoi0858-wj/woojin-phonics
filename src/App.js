@@ -1,5 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
+import {
+  loadDataFromFirestore, saveDataToFirestore,
+  loadLogsFromFirestore, saveLogsToFirestore,
+  onDataChange, onLogsChange
+} from './firebase';
 
 // 🔑 Unsplash API Access Key (여기에 본인의 Access Key를 넣어주세요)
 const UNSPLASH_ACCESS_KEY = 'lUEkIzFvUdSi5HFripV7x1DcCdqy_rirUOB8MHVb2_M';
@@ -73,11 +78,15 @@ function App() {
   // 화면 전환: 'learning' | 'admin' | 'log'
   const [screen, setScreen] = useState('learning');
 
-  // 학습 로그
+  // 학습 로그 — localStorage 먼저, Firestore 비동기 로드
   const [logs, setLogs] = useState(() => loadLogs());
 
-  // 전체 데이터: { "YYYY-MM": [ {id, name, words} ] }
+  // 전체 데이터 — localStorage 먼저, Firestore 비동기 로드
   const [data, setData] = useState(() => loadData());
+
+  // Firestore 로딩 상태
+  const [firebaseReady, setFirebaseReady] = useState(false);
+  const savingRef = useRef(false); // 자체 저장 중인지 (리스너에서 무시용)
 
   // 년/월 선택
   const [selectedYear, setSelectedYear] = useState(CUR_YEAR);
@@ -102,10 +111,42 @@ function App() {
   const currentKey = toKey(selectedYear, selectedMonth);
   const days = data[currentKey] || [];
 
-  // 데이터 변경 시 저장
+  // ─── Firestore 초기 로드 + 실시간 동기화 ───
+  useEffect(() => {
+    // 초기 Firestore 로드
+    (async () => {
+      const fbData = await loadDataFromFirestore();
+      if (fbData) { setData(fbData); saveData(fbData); }
+      const fbLogs = await loadLogsFromFirestore();
+      if (fbLogs) { setLogs(fbLogs); saveLogs(fbLogs); }
+      setFirebaseReady(true);
+    })();
+
+    // 실시간 리스너
+    const unsubData = onDataChange((newData) => {
+      if (!savingRef.current) {
+        setData(newData);
+        saveData(newData);
+      }
+    });
+    const unsubLogs = onLogsChange((newLogs) => {
+      if (!savingRef.current) {
+        setLogs(newLogs);
+        saveLogs(newLogs);
+      }
+    });
+
+    return () => { unsubData(); unsubLogs(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 데이터 변경 시 저장 (localStorage + Firestore)
   useEffect(() => {
     saveData(data);
-  }, [data]);
+    if (firebaseReady) {
+      savingRef.current = true;
+      saveDataToFirestore(data).finally(() => { setTimeout(() => { savingRef.current = false; }, 500); });
+    }
+  }, [data, firebaseReady]);
 
   // 년/월 변경 시 Day 선택 초기화
   const handleYearChange = (y) => { setSelectedYear(y); setSelectedDayIndex(-1); };
@@ -290,6 +331,8 @@ function App() {
       setLogs(prev => {
         const updated = [...prev, logEntry];
         saveLogs(updated);
+        savingRef.current = true;
+        saveLogsToFirestore(updated).finally(() => { setTimeout(() => { savingRef.current = false; }, 500); });
         return updated;
       });
     }
@@ -816,6 +859,7 @@ function LogPage({ logs, setLogs, data, selectedYear, selectedMonth, handleYearC
       const remaining = logs.filter(log => log.yearMonth !== currentKey);
       setLogs(remaining);
       saveLogs(remaining);
+      saveLogsToFirestore(remaining);
     }
   };
 
