@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import './App.css';
 import {
   loadDataFromFirestore, saveDataToFirestore,
@@ -75,7 +75,7 @@ function saveLogs(logs) {
 // 메인 App 컴포넌트
 // ======================================================
 function App() {
-  // 화면 전환: 'learning' | 'admin' | 'log'
+  // 화면 전환: 'learning' | 'admin' | 'log' | 'find'
   const [screen, setScreen] = useState('learning');
 
   // 학습 로그 — localStorage 먼저, Firestore 비동기 로드
@@ -479,6 +479,9 @@ function App() {
               <button className="header-btn admin" onClick={() => setScreen('admin')}>
                 📋 단어 관리
               </button>
+              <button className="header-btn find" onClick={() => setScreen('find')}>
+                🔍 단어 찾기
+              </button>
               <button className="header-btn log" onClick={() => setScreen('log')}>
                 📊 로그
               </button>
@@ -697,6 +700,13 @@ function App() {
           selectedMonth={selectedMonth}
           handleYearChange={handleYearChange}
           handleMonthChange={handleMonthChange}
+        />
+      )}
+
+      {/* ===== Find Screen ===== */}
+      {screen === 'find' && (
+        <FindWordPage
+          data={data}
         />
       )}
 
@@ -947,6 +957,278 @@ function LogPage({ logs, setLogs, data, selectedYear, selectedMonth, handleYearC
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ======================================================
+// 단어 찾기 페이지 컴포넌트
+// ======================================================
+function FindWordPage({ data }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedWord, setSelectedWord] = useState('');
+  const [isWordFound, setIsWordFound] = useState(true);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageLoading, setImageLoading] = useState(false);
+
+  const [repeatCount, setRepeatCount] = useState(3);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const abortRef = useRef(false);
+
+  // 모든 학습 단어 취합 (중복 제거)
+  const allWords = useMemo(() => {
+    const words = [];
+    Object.values(data).forEach(month => {
+      month.forEach(day => {
+        if (day.words) words.push(...day.words);
+      });
+    });
+    return [...new Set(words)].filter(Boolean).sort();
+  }, [data]);
+
+  // 검색어 입력 시 자동완성 필터링
+  useEffect(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      setSuggestions([]);
+      return;
+    }
+    const filtered = allWords.filter(w => w.toLowerCase().includes(term));
+    setSuggestions(filtered.slice(0, 10)); // 최대 10개
+  }, [searchTerm, allWords]);
+
+  // 이미지 프리로드 헬퍼
+  const preloadImage = useCallback((url, timeoutMs = 6000) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const timer = setTimeout(() => { img.src = ''; reject(new Error('timeout')); }, timeoutMs);
+      img.onload = () => { clearTimeout(timer); resolve(url); };
+      img.onerror = () => { clearTimeout(timer); reject(new Error('load failed')); };
+      img.src = url;
+    });
+  }, []);
+
+  // 이미지 검색
+  const fetchImage = async (word) => {
+    const query = word.toLowerCase().trim();
+    setImageLoading(true);
+    setImageUrl('');
+
+    if (!UNSPLASH_ACCESS_KEY) {
+      setImageLoading(false);
+      return;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+        {
+          signal: controller.signal,
+          headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` }
+        }
+      );
+      clearTimeout(timer);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          const imgUrl = data.results[0].urls.regular;
+          await preloadImage(imgUrl);
+          setImageUrl(imgUrl);
+        }
+      }
+    } catch { /* 실패 처리 생략 */ }
+
+    setImageLoading(false);
+  };
+
+  const handleSelectWord = (word) => {
+    setSearchTerm(word);
+    setSuggestions([]);
+
+    // 중단 후 초기화
+    abortRef.current = true;
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+
+    if (allWords.includes(word)) {
+      setSelectedWord(word);
+      setIsWordFound(true);
+      fetchImage(word);
+    } else {
+      setSelectedWord('');
+      setIsWordFound(false);
+      setImageUrl('');
+    }
+    setHasSearched(true);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      const term = searchTerm.trim().toLowerCase();
+      if (term) {
+        handleSelectWord(term);
+      }
+    }
+  };
+
+  const getFemaleVoice = () => {
+    const voices = window.speechSynthesis.getVoices();
+    let voice = voices.find(v => v.name === 'Google US English');
+    if (!voice) voice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
+    if (!voice) voice = voices.find(v => v.name.includes('Zira') || v.name.includes('Samantha'));
+    return voice;
+  };
+
+  const playWord = async (word) => {
+    return new Promise((resolve) => {
+      if (abortRef.current) { resolve(); return; }
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.7;
+      const voice = getFemaleVoice();
+      if (voice) utterance.voice = voice;
+      const forceNext = setTimeout(resolve, 3000);
+      utterance.onend = () => { clearTimeout(forceNext); resolve(); };
+      utterance.onerror = () => { clearTimeout(forceNext); resolve(); };
+      synth.speak(utterance);
+    });
+  };
+
+  const handleListen = async () => {
+    if (!selectedWord || isPlaying) return;
+    setIsPlaying(true);
+    abortRef.current = false;
+
+    // Wake up engine
+    const synth = window.speechSynthesis;
+    synth.speak(new SpeechSynthesisUtterance(''));
+
+    for (let i = 0; i < repeatCount; i++) {
+      if (abortRef.current) break;
+      await playWord(selectedWord);
+      if (i < repeatCount - 1) {
+        await new Promise(r => setTimeout(r, 800)); // 단어 사이 대기
+      }
+    }
+    setIsPlaying(false);
+  };
+
+  const handleStop = () => {
+    abortRef.current = true;
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+  };
+
+  return (
+    <div className="find-container">
+      <div className="find-search-section">
+        <div className="section-title">🔍 단어 검색</div>
+        <div className="search-input-wrapper">
+          <input
+            type="text"
+            className="find-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="단어를 입력하세요..."
+          />
+          {suggestions.length > 0 && (
+            <ul className="suggestions-list">
+              {suggestions.map(word => (
+                <li key={word} onClick={() => handleSelectWord(word)}>
+                  {word}
+                </li>
+              ))}
+            </ul>
+          )}
+          <button className="find-search-btn" onClick={() => handleSelectWord(searchTerm.trim().toLowerCase())} disabled={!searchTerm.trim()}>
+            검색
+          </button>
+        </div>
+      </div>
+
+      <div className="find-result-section">
+        <div className="find-image-area">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={selectedWord}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                setImageUrl('');
+              }}
+              className="find-image"
+            />
+          ) : (
+            <div className="find-image-placeholder">
+              {imageLoading ? (
+                <>
+                  <span className="placeholder-emoji loading-spin">🔍</span>
+                  이미지를 찾고 있어요...
+                </>
+              ) : (
+                <>
+                  <span className="placeholder-emoji">📖</span>
+                  {selectedWord ? '이미지를 찾지 못했어요 😢' : (hasSearched && !isWordFound ? '등록되지 않은 단어입니다.' : '위에서 단어를 검색하세요!')}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="find-controls">
+          <div className="find-word-display">
+            {hasSearched && !isWordFound ? (
+              <span className="rest-letters" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>단어를 찾지못했습니다.</span>
+            ) : (
+              <>
+                <span className="first-letter wiggle">{selectedWord ? selectedWord[0] : '?'}</span>
+                <span className="rest-letters">{selectedWord ? selectedWord.substring(1) : ''}</span>
+              </>
+            )}
+          </div>
+
+          <div className="find-repeat-settings">
+            <span className="repeat-label">🔄 반복 횟수:</span>
+            <div className="radio-group">
+              {[1, 2, 3, 4, 5].map(num => (
+                <label key={num} className="repeat-radio">
+                  <input
+                    type="radio"
+                    name="repeat"
+                    value={num}
+                    checked={repeatCount === num}
+                    onChange={() => setRepeatCount(num)}
+                    disabled={isPlaying}
+                  />
+                  <span className="radio-text">{num}번</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="start-btn-container" style={{ marginTop: '20px' }}>
+            {isPlaying ? (
+              <button className="start-btn stop" onClick={handleStop}>
+                <span className="btn-emoji">⏹️</span>
+                멈추기
+              </button>
+            ) : (
+              <button className="start-btn ready" onClick={handleListen} disabled={!selectedWord}>
+                <span className="btn-emoji">🔊</span>
+                듣기
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
