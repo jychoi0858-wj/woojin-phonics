@@ -301,6 +301,103 @@
     transform: none;
 }
 
+.day-btn.completed {
+    background: var(--color-lime);
+    border-color: #43A047;
+    color: #1B5E20;
+}
+
+.day-btn.completed.active {
+    background: #43A047;
+    color: #FFF;
+    border-color: #2E7D32;
+    box-shadow: 0 3px 0 #1B5E20;
+}
+
+.day-progress {
+    display: block;
+    font-size: 0.7em;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* Year/Month Selector */
+.ym-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.ym-arrow {
+    font-size: 1rem;
+    padding: 6px 10px;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    background: #FFF;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.15s ease;
+}
+
+.ym-arrow:hover {
+    background: var(--color-primary);
+    color: #FFF;
+}
+
+.ym-arrow:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ym-label {
+    font-family: var(--font-kr);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-text);
+    min-width: 80px;
+    text-align: center;
+}
+
+.month-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.month-btn {
+    font-family: var(--font-kr);
+    font-size: 0.85rem;
+    padding: 6px 4px;
+    border: 2px solid var(--color-day);
+    border-radius: var(--radius-sm);
+    background: #FFF;
+    color: var(--color-day-active);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-weight: 600;
+}
+
+.month-btn:hover {
+    background: var(--color-day);
+    color: #FFF;
+}
+
+.month-btn.active {
+    background: var(--color-accent);
+    color: #FFF;
+    border-color: var(--color-accent);
+    font-weight: 800;
+}
+
+.month-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Word Info Card */
 .word-info-card {
     background: var(--bg-card);

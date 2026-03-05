@@ -8,31 +8,49 @@ const UNSPLASH_ACCESS_KEY = 'lUEkIzFvUdSi5HFripV7x1DcCdqy_rirUOB8MHVb2_M';
 const BUILD_TIME = process.env.REACT_APP_BUILD_TIME || 'dev';
 
 // localStorage key
-const STORAGE_KEY = 'woojin-phonics-days';
+const STORAGE_KEY = 'woojin-phonics-data-v2';
 
-// 기본 데이터
-const DEFAULT_DATA = [
-  { name: 'Day 1', words: ['apple', 'ant', 'arm'] },
-  { name: 'Day 2', words: ['bear', 'ball', 'bus'] },
-];
+// 현재 년/월
+const NOW = new Date();
+const CUR_YEAR = NOW.getFullYear();
+const CUR_MONTH = NOW.getMonth() + 1;
+
+// 기본 데이터: { "YYYY-MM": [ {id, name, words} ] }
+const toKey = (y, m) => `${y}-${String(m).padStart(2, '0')}`;
+
+const DEFAULT_DATA = {
+  [toKey(CUR_YEAR, CUR_MONTH)]: [
+    { id: Date.now(), name: 'Day 1', words: ['apple', 'ant', 'arm'] },
+    { id: Date.now() + 1, name: 'Day 2', words: ['bear', 'ball', 'bus'] },
+  ]
+};
 
 // localStorage 헬퍼
-function loadDays() {
+function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // 기존 데이터에 id가 없으면 추가
-        return parsed.map((d, i) => d.id ? d : { ...d, id: Date.now() + i });
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;  // v2 구조
+      }
+    }
+    // v1 배열 데이터 마이그레이션
+    const oldRaw = localStorage.getItem('woojin-phonics-days');
+    if (oldRaw) {
+      const oldParsed = JSON.parse(oldRaw);
+      if (Array.isArray(oldParsed) && oldParsed.length > 0) {
+        const key = toKey(CUR_YEAR, CUR_MONTH);
+        const migrated = { [key]: oldParsed.map((d, i) => d.id ? d : { ...d, id: Date.now() + i }) };
+        return migrated;
       }
     }
   } catch (e) { /* ignore */ }
   return DEFAULT_DATA;
 }
 
-function saveDays(days) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(days));
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 // ======================================================
@@ -42,8 +60,12 @@ function App() {
   // 화면 전환: 'learning' | 'admin'
   const [screen, setScreen] = useState('learning');
 
-  // Day 데이터
-  const [days, setDays] = useState(() => loadDays());
+  // 전체 데이터: { "YYYY-MM": [ {id, name, words} ] }
+  const [data, setData] = useState(() => loadData());
+
+  // 년/월 선택
+  const [selectedYear, setSelectedYear] = useState(CUR_YEAR);
+  const [selectedMonth, setSelectedMonth] = useState(CUR_MONTH);
 
   // 학습 상태
   const [selectedDayIndex, setSelectedDayIndex] = useState(-1);
@@ -52,7 +74,7 @@ function App() {
   const [isPaused, setIsPaused] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [imageLoading, setImageLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(''); // 'alphabet' | 'phonics' | 'word' | ''
+  const [currentStep, setCurrentStep] = useState('');
   const [displayWord, setDisplayWord] = useState('');
 
   const audioRef = useRef(new Audio());
@@ -60,10 +82,24 @@ function App() {
   const pauseRef = useRef(false);
   const resumeResolveRef = useRef(null);
 
-  // Day 변경 시 저장
+  // 현재 선택된 년/월의 키와 Day 목록
+  const currentKey = toKey(selectedYear, selectedMonth);
+  const days = data[currentKey] || [];
+
+  // 데이터 변경 시 저장
   useEffect(() => {
-    saveDays(days);
-  }, [days]);
+    saveData(data);
+  }, [data]);
+
+  // 년/월 변경 시 Day 선택 초기화
+  const handleYearChange = (y) => { setSelectedYear(y); setSelectedDayIndex(-1); };
+  const handleMonthChange = (m) => { setSelectedMonth(m); setSelectedDayIndex(-1); };
+
+  // 데이터에 존재하는 년도 목록 (현재 년도 포함)
+  const availableYears = [...new Set([
+    CUR_YEAR,
+    ...Object.keys(data).map(k => parseInt(k.split('-')[0]))
+  ])].sort();
 
   // ─── TTS 관련 ───
   const getFemaleVoice = () => {
@@ -212,6 +248,21 @@ function App() {
     }
   };
 
+  // ─── 학습 완료 마킹 ───
+  const markWordLearned = (dayIdx, wordIdx) => {
+    setData(prev => {
+      const arr = prev[currentKey] || [];
+      return {
+        ...prev, [currentKey]: arr.map((d, i) => {
+          if (i !== dayIdx) return d;
+          const learned = d.learnedWords ? [...d.learnedWords] : [];
+          if (!learned.includes(wordIdx)) learned.push(wordIdx);
+          return { ...d, learnedWords: learned };
+        })
+      };
+    });
+  };
+
   // ─── 학습 시작 (선택된 Day의 모든 단어 순차 학습) ───
   const startLearning = async () => {
     if (isPlaying || selectedDayIndex < 0) return;
@@ -228,6 +279,10 @@ function App() {
       if (abortRef.current) break;
       setCurrentWordIndex(i);
       await learnOneWord(dayData.words[i]);
+      // 학습 완료 마킹 (중단된 게 아니면)
+      if (!abortRef.current) {
+        markWordLearned(selectedDayIndex, i);
+      }
       // 단어 사이 짧은 대기
       if (i < dayData.words.length - 1) {
         await new Promise(r => setTimeout(r, 1200));
@@ -289,11 +344,18 @@ function App() {
 
   // ─── 관리자 기능 ───
   const addDay = () => {
-    setDays(prev => [...prev, { id: Date.now(), name: `Day ${prev.length + 1}`, words: [] }]);
+    setData(prev => {
+      const arr = prev[currentKey] || [];
+      return { ...prev, [currentKey]: [...arr, { id: Date.now(), name: `Day ${arr.length + 1}`, words: [] }] };
+    });
   };
 
   const removeDay = (idx) => {
-    setDays(prev => prev.filter((_, i) => i !== idx));
+    setData(prev => {
+      const arr = prev[currentKey] || [];
+      const updated = arr.filter((_, i) => i !== idx);
+      return { ...prev, [currentKey]: updated };
+    });
     if (selectedDayIndex === idx) {
       setSelectedDayIndex(-1);
     } else if (selectedDayIndex > idx) {
@@ -303,15 +365,25 @@ function App() {
 
   const addWordToDay = (dayIdx, word) => {
     if (!word.trim()) return;
-    setDays(prev => prev.map((d, i) =>
-      i === dayIdx ? { ...d, words: [...d.words, word.trim().toLowerCase()] } : d
-    ));
+    setData(prev => {
+      const arr = prev[currentKey] || [];
+      return {
+        ...prev, [currentKey]: arr.map((d, i) =>
+          i === dayIdx ? { ...d, words: [...d.words, word.trim().toLowerCase()] } : d
+        )
+      };
+    });
   };
 
   const removeWordFromDay = (dayIdx, wordIdx) => {
-    setDays(prev => prev.map((d, i) =>
-      i === dayIdx ? { ...d, words: d.words.filter((_, wi) => wi !== wordIdx) } : d
-    ));
+    setData(prev => {
+      const arr = prev[currentKey] || [];
+      return {
+        ...prev, [currentKey]: arr.map((d, i) =>
+          i === dayIdx ? { ...d, words: d.words.filter((_, wi) => wi !== wordIdx) } : d
+        )
+      };
+    });
   };
 
   // ─── 렌더링 ───
@@ -379,24 +451,50 @@ function App() {
 
           {/* Right panel: controls */}
           <aside className="learning-right">
-            {/* Day Selector */}
+            {/* Year / Month / Day Selector */}
             <div className="day-selector">
-              <div className="section-title">📅 Day 선택</div>
-              <div className="day-buttons">
-                {days.map((day, i) => (
+              <div className="section-title">📅 년/월 선택</div>
+              {/* Year selector */}
+              <div className="ym-row">
+                <button className="ym-arrow" onClick={() => handleYearChange(selectedYear - 1)} disabled={isPlaying}>◀</button>
+                <span className="ym-label">{selectedYear}년</span>
+                <button className="ym-arrow" onClick={() => handleYearChange(selectedYear + 1)} disabled={isPlaying}>▶</button>
+              </div>
+              {/* Month selector */}
+              <div className="month-buttons">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
                   <button
-                    key={i}
-                    className={`day-btn ${selectedDayIndex === i ? 'active' : ''}`}
-                    onClick={() => handleDaySelect(i)}
+                    key={m}
+                    className={`month-btn ${selectedMonth === m ? 'active' : ''}`}
+                    onClick={() => handleMonthChange(m)}
                     disabled={isPlaying}
                   >
-                    {day.name}
+                    {m}월
                   </button>
                 ))}
               </div>
+              {/* Day buttons */}
+              <div className="section-title" style={{ marginTop: 8 }}>📚 Day 선택</div>
+              <div className="day-buttons">
+                {days.map((day, i) => {
+                  const learnedCount = (day.learnedWords || []).length;
+                  const isCompleted = day.words.length > 0 && learnedCount >= day.words.length;
+                  return (
+                    <button
+                      key={day.id || i}
+                      className={`day-btn ${selectedDayIndex === i ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                      onClick={() => handleDaySelect(i)}
+                      disabled={isPlaying}
+                    >
+                      {isCompleted && '✅ '}{day.name}
+                      {day.words.length > 0 && <span className="day-progress">{learnedCount}/{day.words.length}</span>}
+                    </button>
+                  );
+                })}
+              </div>
               {days.length === 0 && (
-                <div style={{ color: 'var(--color-text-light)', marginTop: 8, fontFamily: 'var(--font-kr)' }}>
-                  단어 관리에서 Day를 추가해 주세요!
+                <div style={{ color: 'var(--color-text-light)', marginTop: 8, fontFamily: 'var(--font-kr)', fontSize: '0.9rem' }}>
+                  이 달에는 아직 Day가 없어요!
                 </div>
               )}
             </div>
@@ -408,9 +506,10 @@ function App() {
                   <div className="current-word-label">📝 현재 학습 단어</div>
                   <div className="current-word-text">
                     {isPlaying ? selectedDay.words[currentWordIndex] : (selectedDay.words[0] || '(없음)')}
+                    {isPlaying && (selectedDay.learnedWords || []).includes(currentWordIndex) && ' ✅'}
                   </div>
                   <div className="word-counter">
-                    {selectedDay.words.length}개 단어 등록됨
+                    {selectedDay.words.length}개 단어 · {(selectedDay.learnedWords || []).length}개 학습 완료
                   </div>
 
                   {/* Progress */}
@@ -496,6 +595,11 @@ function App() {
           removeDay={removeDay}
           addWordToDay={addWordToDay}
           removeWordFromDay={removeWordFromDay}
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          handleYearChange={handleYearChange}
+          handleMonthChange={handleMonthChange}
+          isPlaying={isPlaying}
         />
       )}
 
@@ -510,19 +614,40 @@ function App() {
 // ======================================================
 // 관리자 페이지 컴포넌트
 // ======================================================
-function AdminPage({ days, addDay, removeDay, addWordToDay, removeWordFromDay }) {
+function AdminPage({ days, addDay, removeDay, addWordToDay, removeWordFromDay, selectedYear, selectedMonth, handleYearChange, handleMonthChange }) {
   return (
     <div className="admin-container">
+      {/* Year / Month selector */}
+      <div className="day-selector" style={{ marginBottom: 8 }}>
+        <div className="section-title">📅 년/월 선택</div>
+        <div className="ym-row">
+          <button className="ym-arrow" onClick={() => handleYearChange(selectedYear - 1)}>◀</button>
+          <span className="ym-label">{selectedYear}년</span>
+          <button className="ym-arrow" onClick={() => handleYearChange(selectedYear + 1)}>▶</button>
+        </div>
+        <div className="month-buttons">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+            <button
+              key={m}
+              className={`month-btn ${selectedMonth === m ? 'active' : ''}`}
+              onClick={() => handleMonthChange(m)}
+            >
+              {m}월
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="admin-top-bar">
         <button className="add-day-btn" onClick={addDay}>
-          ➕ Day 추가
+          ➕ Day 추가 ({selectedYear}년 {selectedMonth}월)
         </button>
       </div>
 
       {days.length === 0 && (
         <div className="no-day-message">
           <span className="msg-emoji">📝</span>
-          <span className="msg-text">아직 Day가 없어요. 위 버튼으로 추가해 주세요!</span>
+          <span className="msg-text">{selectedYear}년 {selectedMonth}월에 Day가 없어요. 위 버튼으로 추가해 주세요!</span>
         </div>
       )}
 
