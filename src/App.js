@@ -293,7 +293,7 @@ function App() {
   };
 
   const removeDay = (idx) => {
-    setDays(prev => prev.filter((_, i) => i !== idx).map((d, i) => ({ ...d, name: `Day ${i + 1}` })));
+    setDays(prev => prev.filter((_, i) => i !== idx));
     if (selectedDayIndex === idx) {
       setSelectedDayIndex(-1);
     } else if (selectedDayIndex > idx) {
