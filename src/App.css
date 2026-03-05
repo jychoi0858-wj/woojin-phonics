@@ -843,9 +843,9 @@
 
     .learning-left {
         min-height: auto;
-        padding: 6px;
+        padding: 10px;
         gap: 0;
-        border-radius: var(--radius-lg);
+        border-radius: 12px;
         flex: none;
     }
 
@@ -881,8 +881,8 @@
     }
 
     .day-selector {
-        padding: 8px;
-        border-radius: var(--radius-lg);
+        padding: 12px;
+        border-radius: 12px;
     }
 
     .day-btn {
@@ -891,8 +891,8 @@
     }
 
     .word-info-card {
-        padding: 8px;
-        border-radius: var(--radius-lg);
+        padding: 12px;
+        border-radius: 12px;
     }
 
     .current-word-label {
@@ -922,8 +922,8 @@
     }
 
     .step-indicator {
-        padding: 8px;
-        border-radius: var(--radius-lg);
+        padding: 12px;
+        border-radius: 12px;
     }
 
     .step-label {
@@ -1063,15 +1063,18 @@
     }
 
     .day-selector {
-        padding: 6px;
+        padding: 8px;
+        border-radius: 10px;
     }
 
     .word-info-card {
-        padding: 6px;
+        padding: 8px;
+        border-radius: 10px;
     }
 
     .step-indicator {
-        padding: 6px;
+        padding: 8px;
+        border-radius: 10px;
     }
 
     .start-btn-container {
