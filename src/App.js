@@ -545,12 +545,15 @@ function AdminPage({ days, addDay, removeDay, addWordToDay, removeWordFromDay })
 // ======================================================
 function DayCard({ day, dayIdx, removeDay, addWordToDay, removeWordFromDay }) {
   const [newWord, setNewWord] = useState('');
+  const inputRef = useRef(null);
 
   const handleAdd = () => {
     if (newWord.trim()) {
       addWordToDay(dayIdx, newWord);
       setNewWord('');
     }
+    // 추가 후 입력 필드에 포커스
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const handleKeyDown = (e) => {
@@ -588,6 +591,7 @@ function DayCard({ day, dayIdx, removeDay, addWordToDay, removeWordFromDay }) {
 
       <div className="add-word-row">
         <input
+          ref={inputRef}
           className="add-word-input"
           type="text"
           value={newWord}
