@@ -1,13 +1,89 @@
-body {
+/* ===== CSS Variables (초등 저학년 파스텔 팔레트) ===== */
+:root {
+  --bg-main: #FFF9E6;
+  --bg-card: #FFFFFF;
+  --bg-card-alt: #FFF3E0;
+  
+  --color-primary: #66BB6A;
+  --color-primary-dark: #4CAF50;
+  --color-primary-shadow: #388E3C;
+  
+  --color-accent: #FFA726;
+  --color-accent-dark: #F57C00;
+  
+  --color-day: #64B5F6;
+  --color-day-active: #1E88E5;
+  --color-day-hover: #42A5F5;
+  
+  --color-danger: #EF5350;
+  --color-danger-light: #EF9A9A;
+  
+  --color-highlight: #EF5350;
+  --color-text-word: #1A237E;
+  --color-text: #333333;
+  --color-text-light: #757575;
+  --color-disabled: #E0E0E0;
+  --color-disabled-text: #9E9E9E;
+
+  --color-pink: #F48FB1;
+  --color-purple: #CE93D8;
+  --color-cyan: #4DD0E1;
+  --color-lime: #AED581;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-round: 50px;
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+  --shadow-btn: 0 4px 0px;
+
+  --font-kr: 'Jua', sans-serif;
+  --font-en: 'Nunito', sans-serif;
+}
+
+/* ===== Global Reset & Defaults ===== */
+* {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-kr);
+  background: var(--bg-main);
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-day);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-day-active);
 }
