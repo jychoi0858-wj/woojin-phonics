@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/woojin-phonics/static/css/main.1cb356d3.css",
+    "main.css": "/woojin-phonics/static/css/main.1780c9bb.css",
     "main.js": "/woojin-phonics/static/js/main.f0365569.js",
     "static/js/453.6047c902.chunk.js": "/woojin-phonics/static/js/453.6047c902.chunk.js",
     "index.html": "/woojin-phonics/index.html",
-    "main.1cb356d3.css.map": "/woojin-phonics/static/css/main.1cb356d3.css.map",
+    "main.1780c9bb.css.map": "/woojin-phonics/static/css/main.1780c9bb.css.map",
     "main.f0365569.js.map": "/woojin-phonics/static/js/main.f0365569.js.map",
     "453.6047c902.chunk.js.map": "/woojin-phonics/static/js/453.6047c902.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.1cb356d3.css",
+    "static/css/main.1780c9bb.css",
     "static/js/main.f0365569.js"
   ]
 }
