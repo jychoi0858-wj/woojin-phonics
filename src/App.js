@@ -22,7 +22,10 @@ function loadDays() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // 기존 데이터에 id가 없으면 추가
+        return parsed.map((d, i) => d.id ? d : { ...d, id: Date.now() + i });
+      }
     }
   } catch (e) { /* ignore */ }
   return DEFAULT_DATA;
@@ -286,7 +289,7 @@ function App() {
 
   // ─── 관리자 기능 ───
   const addDay = () => {
-    setDays(prev => [...prev, { name: `Day ${prev.length + 1}`, words: [] }]);
+    setDays(prev => [...prev, { id: Date.now(), name: `Day ${prev.length + 1}`, words: [] }]);
   };
 
   const removeDay = (idx) => {
@@ -525,7 +528,7 @@ function AdminPage({ days, addDay, removeDay, addWordToDay, removeWordFromDay })
 
       {days.map((day, dayIdx) => (
         <DayCard
-          key={dayIdx}
+          key={day.id || dayIdx}
           day={day}
           dayIdx={dayIdx}
           removeDay={removeDay}
