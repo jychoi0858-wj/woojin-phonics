@@ -4,6 +4,9 @@ import './App.css';
 // 🔑 Unsplash API Access Key (여기에 본인의 Access Key를 넣어주세요)
 const UNSPLASH_ACCESS_KEY = 'lUEkIzFvUdSi5HFripV7x1DcCdqy_rirUOB8MHVb2_M';
 
+// 빌드 시간
+const BUILD_TIME = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+
 // localStorage key
 const STORAGE_KEY = 'woojin-phonics-days';
 
@@ -492,6 +495,11 @@ function App() {
           removeWordFromDay={removeWordFromDay}
         />
       )}
+
+      {/* ===== Footer - Build Info ===== */}
+      <div className="build-footer">
+        마지막 빌드: {BUILD_TIME}
+      </div>
     </div>
   );
 }

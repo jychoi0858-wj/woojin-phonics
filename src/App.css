@@ -234,6 +234,7 @@
 /* Right Panel - Controls */
 .learning-right {
     width: 380px;
+    min-width: 280px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -746,6 +747,17 @@
     padding: 8px 0;
 }
 
+/* Build Footer */
+.build-footer {
+    text-align: center;
+    font-family: var(--font-kr);
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    opacity: 0.6;
+    padding: 4px 0;
+    flex-shrink: 0;
+}
+
 /* ===== Responsive: Tablet Portrait & Small Screens ===== */
 @media (max-width: 900px) {
     .learning-main {
@@ -789,6 +801,10 @@
 
 /* ===== Responsive: Phone (Galaxy S24 Ultra etc.) ===== */
 @media (max-width: 500px) {
+    .app-container {
+        overflow-y: auto;
+    }
+
     .app-header {
         padding: 8px 12px;
     }
@@ -803,19 +819,33 @@
     }
 
     .learning-main {
+        flex-direction: column;
         padding: 8px;
         gap: 8px;
+        overflow-y: auto;
     }
 
     .learning-left {
-        min-height: 200px;
+        min-height: auto;
         padding: 8px;
         gap: 2px;
         border-radius: var(--radius-lg);
+        flex: none;
+    }
+
+    .learning-right {
+        width: 100% !important;
+        min-width: unset;
+        gap: 8px;
+        padding-right: 0;
+    }
+
+    .image-area {
+        max-height: 30vh;
     }
 
     .image-area img {
-        max-height: 85%;
+        max-height: 100%;
         max-width: 95%;
         border: 3px solid var(--bg-main);
     }
