@@ -67,3 +67,17 @@ export function onLogsChange(callback) {
         if (snap.exists()) callback(snap.data().entries || []);
     });
 }
+
+// ─── 알파벳 짝맞추기 게임 상태 ───
+const ALPHABET_PROGRESS_DOC = doc(db, 'woojin-phonics', 'alphabet_progress');
+
+export async function saveAlphabetProgressToFirestore(date, completedLetters) {
+    try {
+        await setDoc(ALPHABET_PROGRESS_DOC, {
+            [date]: completedLetters,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+    } catch (e) {
+        console.warn('Firestore saveAlphabetProgress 실패:', e);
+    }
+}

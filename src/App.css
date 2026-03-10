@@ -70,6 +70,18 @@
     box-shadow: 0 3px 0 var(--color-primary-shadow);
 }
 
+.header-btn.settings {
+    background: var(--color-lime);
+    color: #2E7D32;
+    box-shadow: 0 3px 0 #8BB154;
+}
+
+.header-btn.game {
+    background: var(--color-accent);
+    color: #FFF;
+    box-shadow: 0 3px 0 var(--color-accent-dark);
+}
+
 .header-btn.admin:hover,
 .header-btn.find:hover,
 .header-btn.log:hover,
@@ -79,12 +91,34 @@
     box-shadow: 0 5px 0 var(--color-primary-shadow);
 }
 
+.header-btn.settings:hover {
+    background: #9CCC65;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #8BB154;
+}
+
+.header-btn.game:hover {
+    background: var(--color-accent-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--color-accent-dark);
+}
+
 .header-btn.admin:active,
 .header-btn.find:active,
 .header-btn.log:active,
 .header-btn.home:active {
     transform: translateY(2px);
     box-shadow: 0 1px 0 var(--color-primary-shadow);
+}
+
+.header-btn.settings:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #8BB154;
+}
+
+.header-btn.game:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--color-accent-dark);
 }
 
 /* ===== Main Learning Screen ===== */
@@ -1695,15 +1729,4 @@
 .settings-btn.save {
     background: var(--color-primary);
     color: white;
-}
-
-.header-btn.settings {
-    background: #FFF;
-    color: var(--color-text-light);
-    border-color: var(--color-disabled);
-}
-
-.header-btn.settings:hover {
-    background: var(--color-disabled);
-    color: var(--color-text);
 }

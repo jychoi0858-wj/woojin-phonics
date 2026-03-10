@@ -6,6 +6,7 @@ import {
   onDataChange, onLogsChange
 } from './firebase';
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
+import AlphabetMatchGame from './AlphabetMatchGame';
 
 // 🔑 Unsplash API Access Key (여기에 본인의 Access Key를 넣어주세요)
 const UNSPLASH_ACCESS_KEY = 'lUEkIzFvUdSi5HFripV7x1DcCdqy_rirUOB8MHVb2_M';
@@ -76,7 +77,7 @@ function saveLogs(logs) {
 // 메인 App 컴포넌트
 // ======================================================
 function App() {
-  // 화면 전환: 'learning' | 'admin' | 'log' | 'find'
+  // 화면 전환: 'learning' | 'admin' | 'log' | 'find' | 'game'
   const [screen, setScreen] = useState('learning');
 
   // 학습 로그 — localStorage 먼저, Firestore 비동기 로드
@@ -163,7 +164,8 @@ function App() {
   const handleYearChange = (y) => { setSelectedYear(y); setSelectedDayIndex(-1); };
   const handleMonthChange = (m) => { setSelectedMonth(m); setSelectedDayIndex(-1); };
 
-  // 데이터에 존재하는 년도 목록 (현재 년도 포함)
+  // 데이터에 존재하는 년도 목록 (현재 년도 포함) (사용되지 않음)
+  // eslint-disable-next-line no-unused-vars
   const availableYears = [...new Set([
     CUR_YEAR,
     ...Object.keys(data).map(k => parseInt(k.split('-')[0]))
@@ -581,6 +583,9 @@ function App() {
               <button className="header-btn find" onClick={() => setScreen('find')}>
                 🔍 단어 찾기
               </button>
+              <button className="header-btn game" onClick={() => setScreen('game')}>
+                🎮 알파벳 짝맞추기
+              </button>
               <button className="header-btn log" onClick={() => setScreen('log')}>
                 📊 로그
               </button>
@@ -796,6 +801,13 @@ function App() {
         </main>
       )
       }
+
+      {/* ===== Alphabet Match Game Screen ===== */}
+      {screen === 'game' && (
+        <main className="learning-main" style={{ display: 'flex', justifyContent: 'center' }}>
+          <AlphabetMatchGame />
+        </main>
+      )}
 
       {/* ===== Admin Screen ===== */}
       {
