@@ -5,6 +5,7 @@ import {
   loadLogsFromFirestore, saveLogsToFirestore,
   onDataChange, onLogsChange
 } from './firebase';
+import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
 
 // 🔑 Unsplash API Access Key (여기에 본인의 Access Key를 넣어주세요)
 const UNSPLASH_ACCESS_KEY = 'lUEkIzFvUdSi5HFripV7x1DcCdqy_rirUOB8MHVb2_M';
@@ -101,6 +102,16 @@ function App() {
   const [imageLoading, setImageLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState('');
   const [displayWord, setDisplayWord] = useState('');
+
+  // 설정 관련 상태 (Azure Key & Region)
+  const [showSettings, setShowSettings] = useState(false);
+  const [azureKey, setAzureKey] = useState(() => localStorage.getItem('woojin-azure-key') || '');
+  const [azureRegion, setAzureRegion] = useState(() => localStorage.getItem('woojin-azure-region') || 'koreacentral');
+
+  // 음성 인식 관련 상태
+  const [isWaitingForSpeech, setIsWaitingForSpeech] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechFeedback, setSpeechFeedback] = useState('');
 
   const audioRef = useRef(new Audio());
   const abortRef = useRef(false);
@@ -338,7 +349,7 @@ function App() {
     }
   };
 
-  // ─── 학습 시작 (선택된 Day의 모든 단어 순차 학습) ───
+  // ─── 학습 시작 (선택된 Day의 현재 단어 학습) ───
   const startLearning = async () => {
     if (isPlaying || selectedDayIndex < 0) return;
     const dayData = days[selectedDayIndex];
@@ -346,26 +357,97 @@ function App() {
 
     setIsPlaying(true);
     setIsPaused(false);
+    setIsWaitingForSpeech(false);
+    setIsListening(false);
+    setSpeechFeedback('');
     abortRef.current = false;
     pauseRef.current = false;
     wakeUpEngine();
 
-    for (let i = 0; i < dayData.words.length; i++) {
-      if (abortRef.current) break;
-      setCurrentWordIndex(i);
-      await learnOneWord(dayData.words[i]);
-      // 학습 완료 마킹 (중단된 게 아니면)
+    await learnOneWord(dayData.words[currentWordIndex]);
+
+    if (!abortRef.current) {
+      setCurrentStep('');
+      setIsWaitingForSpeech(true);
+    } else {
+      setIsPlaying(false);
+    }
+  };
+
+  // ─── 다음 단어로 넘어가기 ───
+  const goToNextWord = async () => {
+    setIsWaitingForSpeech(false);
+    setSpeechFeedback('');
+    const dayData = days[selectedDayIndex];
+
+    if (currentWordIndex + 1 < dayData.words.length) {
+      const nextIndex = currentWordIndex + 1;
+      setCurrentWordIndex(nextIndex);
+      abortRef.current = false;
+      await learnOneWord(dayData.words[nextIndex]);
       if (!abortRef.current) {
-        markWordLearned(selectedDayIndex, i);
+        setCurrentStep('');
+        setIsWaitingForSpeech(true);
+      } else {
+        setIsPlaying(false);
       }
-      // 단어 사이 짧은 대기
-      if (i < dayData.words.length - 1) {
-        await new Promise(r => setTimeout(r, 1200));
-      }
+    } else {
+      setIsPlaying(false);
+      setCurrentWordIndex(0);
+    }
+  };
+
+  // ─── 음성 인식 (Azure Speech Service) ───
+  const startSpeechRecognition = () => {
+    if (!azureKey || !azureRegion) {
+      alert("Azure 음성 서비스 Key와 Region을 먼저 설정해주세요. (상단 ⚙️ 설정 버튼)");
+      setShowSettings(true);
+      return;
     }
 
-    setCurrentStep('');
-    setIsPlaying(false);
+    setIsListening(true);
+    setSpeechFeedback('');
+
+    const speechConfig = speechsdk.SpeechConfig.fromSubscription(azureKey, azureRegion);
+    speechConfig.speechRecognitionLanguage = "en-US";
+
+    // 타임아웃 설정 (말을 안할 경우 너무 길게 대기하는 것을 방지)
+    speechConfig.setProperty(speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000");
+    speechConfig.setProperty(speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "2000");
+
+    const audioConfig = speechsdk.AudioConfig.fromDefaultMicrophoneInput();
+    const recognizer = new speechsdk.SpeechRecognizer(speechConfig, audioConfig);
+
+    const cleanup = () => {
+      setIsListening(false);
+      recognizer.close();
+    };
+
+    recognizer.recognizeOnceAsync(
+      (result) => {
+        if (result.reason === speechsdk.ResultReason.RecognizedSpeech) {
+          const speechResult = result.text.toLowerCase().replace(/[.,!?;:]/g, '').trim();
+          const currentWord = displayWord.toLowerCase().trim();
+
+          console.log('음성 인식 결과:', speechResult, '현재 단어:', currentWord);
+
+          if (speechResult.includes(currentWord) || currentWord.includes(speechResult)) {
+            setSpeechFeedback('정답!');
+            markWordLearned(selectedDayIndex, currentWordIndex);
+          } else {
+            setSpeechFeedback('다시시도해보세요');
+          }
+        } else if (result.reason === speechsdk.ResultReason.NoMatch) {
+          setSpeechFeedback('목소리를 인식하지 못했습니다. 다시 시도해보세요.');
+        }
+        cleanup();
+      },
+      (error) => {
+        console.error('음성 인식 에러:', error);
+        setSpeechFeedback('마이크 또는 설정 오류가 발생했습니다.');
+        cleanup();
+      }
+    );
   };
 
   // ─── 학습 중지 ───
@@ -380,6 +462,9 @@ function App() {
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentStep('');
+    setIsWaitingForSpeech(false);
+    setIsListening(false);
+    setSpeechFeedback('');
   };
 
   // ─── 일시정지 / 재개 ───
@@ -415,6 +500,17 @@ function App() {
     setDisplayWord('');
     setImageUrl('');
     setCurrentStep('');
+    setIsWaitingForSpeech(false);
+    setIsListening(false);
+    setSpeechFeedback('');
+  };
+
+  // ─── 설정 관련 함수 ───
+  const saveSettings = () => {
+    localStorage.setItem('woojin-azure-key', azureKey);
+    localStorage.setItem('woojin-azure-region', azureRegion);
+    setShowSettings(false);
+    alert('설정이 저장되었습니다.');
   };
 
   // ─── 관리자 기능 ───
@@ -474,6 +570,9 @@ function App() {
           우진이 파닉스 선생님
         </div>
         <div className="header-btns">
+          <button className="header-btn settings" onClick={() => setShowSettings(true)}>
+            ⚙️ 설정
+          </button>
           {screen === 'learning' ? (
             <>
               <button className="header-btn admin" onClick={() => setScreen('admin')}>
@@ -634,22 +733,47 @@ function App() {
                 {/* Start / Pause / Stop Buttons */}
                 <div className="start-btn-container">
                   {isPlaying ? (
-                    <div className="btn-row">
-                      <button
-                        className={`start-btn ${isPaused ? 'resume' : 'pause'}`}
-                        onClick={isPaused ? resumeLearning : pauseLearning}
-                      >
-                        <span className="btn-emoji">{isPaused ? '▶️' : '⏸️'}</span>
-                        {isPaused ? '계속하기' : '일시정지'}
-                      </button>
-                      <button
-                        className="start-btn stop"
-                        onClick={stopLearning}
-                      >
-                        <span className="btn-emoji">⏹️</span>
-                        멈추기
-                      </button>
-                    </div>
+                    <>
+                      {isWaitingForSpeech ? (
+                        <div className="speech-container">
+                          <button
+                            className={`mic-btn ${isListening ? 'listening' : ''}`}
+                            onClick={startSpeechRecognition}
+                            disabled={isListening}
+                          >
+                            <span className="btn-emoji">🎤</span>
+                            말하기
+                          </button>
+
+                          {speechFeedback && (
+                            <div className={`speech-feedback ${speechFeedback === '정답!' ? 'correct' : 'incorrect'}`}>
+                              {speechFeedback}
+                            </div>
+                          )}
+
+                          <button className="next-word-btn" onClick={goToNextWord}>
+                            다음 단어 <span className="btn-emoji">⏭️</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="btn-row">
+                          <button
+                            className={`start-btn ${isPaused ? 'resume' : 'pause'}`}
+                            onClick={isPaused ? resumeLearning : pauseLearning}
+                          >
+                            <span className="btn-emoji">{isPaused ? '▶️' : '⏸️'}</span>
+                            {isPaused ? '계속하기' : '일시정지'}
+                          </button>
+                          <button
+                            className="start-btn stop"
+                            onClick={stopLearning}
+                          >
+                            <span className="btn-emoji">⏹️</span>
+                            멈추기
+                          </button>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <button
                       className="start-btn ready"
@@ -708,6 +832,42 @@ function App() {
         <FindWordPage
           data={data}
         />
+      )}
+
+      {/* ===== Settings Modal ===== */}
+      {showSettings && (
+        <div className="modal-overlay">
+          <div className="settings-modal">
+            <h2 className="modal-title">⚙️ 설정</h2>
+
+            <div className="settings-group">
+              <label>Azure Speech Service Key</label>
+              <input
+                type="password"
+                value={azureKey}
+                onChange={(e) => setAzureKey(e.target.value)}
+                placeholder="Azure API Key 입력..."
+                className="settings-input"
+              />
+            </div>
+
+            <div className="settings-group">
+              <label>Azure Region</label>
+              <input
+                type="text"
+                value={azureRegion}
+                onChange={(e) => setAzureRegion(e.target.value)}
+                placeholder="예: koreacentral"
+                className="settings-input"
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="settings-btn cancel" onClick={() => setShowSettings(false)}>취소</button>
+              <button className="settings-btn save" onClick={saveSettings}>저장</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ===== Footer - Build Info ===== */}
