@@ -1143,6 +1143,9 @@ function FindWordPage({ data }) {
   const [isWordFound, setIsWordFound] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // 🔍 검색 범위 모드: 'registered' = 등록된 단어만 / 'all' = 모든 단어
+  const [searchMode, setSearchMode] = useState('registered');
+
   const [imageUrl, setImageUrl] = useState('');
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -1227,7 +1230,9 @@ function FindWordPage({ data }) {
     window.speechSynthesis.cancel();
     setIsPlaying(false);
 
-    if (allWords.includes(word)) {
+    // 'all' 모드: 등록 여부와 상관없이 모든 단어를 검색 가능
+    // 'registered' 모드: 등록된 단어만 검색 가능
+    if (searchMode === 'all' || allWords.includes(word)) {
       setSelectedWord(word);
       setIsWordFound(true);
       fetchImage(word);
@@ -1302,6 +1307,38 @@ function FindWordPage({ data }) {
     <div className="find-container">
       <div className="find-search-section">
         <div className="section-title">🔍 단어 검색</div>
+
+        {/* 검색 범위 선택 */}
+        <div className="search-mode-toggle">
+          <span className="search-mode-label">검색 범위:</span>
+          <button
+            className={`search-mode-btn ${searchMode === 'registered' ? 'active' : ''}`}
+            onClick={() => {
+              setSearchMode('registered');
+              // 모드 변경 시 결과 초기화 (기존 선택 단어는 유지)
+              if (selectedWord && !allWords.includes(selectedWord)) {
+                setIsWordFound(false);
+                setSelectedWord('');
+                setImageUrl('');
+              }
+            }}
+          >
+            📚 등록된 단어만
+          </button>
+          <button
+            className={`search-mode-btn ${searchMode === 'all' ? 'active' : ''}`}
+            onClick={() => {
+              setSearchMode('all');
+              // '모든 단어' 모드로 바꾸면 '찾지못함' 플래그 해제
+              if (!isWordFound && searchTerm.trim()) {
+                setIsWordFound(true);
+              }
+            }}
+          >
+            🌐 모든 단어
+          </button>
+        </div>
+
         <div className="search-input-wrapper">
           <input
             type="text"
@@ -1309,7 +1346,7 @@ function FindWordPage({ data }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            placeholder="단어를 입력하세요..."
+            placeholder={searchMode === 'all' ? '원하는 영어 단어를 입력하세요...' : '등록된 단어를 입력하세요...'}
           />
           {suggestions.length > 0 && (
             <ul className="suggestions-list">
