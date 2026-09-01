@@ -20,8 +20,26 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
 
   const phBusyRef = useRef(false);
   const phAbortRef = useRef(false);
+  const phRunRef = useRef(0);                   // 재생 회차 토큰 (겹침 방지)
   const [noSound, setNoSound] = useState('');   // 음원이 아직 없을 때 안내
+
+  // 재생 시작 — 토큰을 발급하고 버튼을 잠금
+  const beginRun = (key) => {
+    const token = ++phRunRef.current;
+    phAbortRef.current = false;
+    phBusyRef.current = true;
+    setPlaying(key);
+    return token;
+  };
+  // 재생 끝 — 가장 최근 회차일 때만 버튼을 되돌림
+  const endRun = (token) => {
+    if (phRunRef.current !== token) return;     // 이미 새 재생이 시작됨
+    phBusyRef.current = false;
+    setPlaying(null);
+  };
+
   const stopSoundPiece = () => {
+    phRunRef.current++;                         // 진행 중인 회차를 무효화
     phAbortRef.current = true;
     stopPhonicsSound();
     if (stop) stop();
@@ -44,9 +62,8 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
   // 파닉스 소리만 재생 (위의 반복·간격 설정을 따름)
   const playPhonicsOnly = async (p, idx) => {
     if (phBusyRef.current || playing) return;
-    phBusyRef.current = true; phAbortRef.current = false;
     setNoSound('');
-    setPlaying(idx + '-phsound');
+    const token = beginRun(idx + '-phsound');
     try {
       for (let r = 0; r < repeatCount; r++) {
         if (phAbortRef.current) break;
@@ -54,25 +71,24 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
         if (!ok) { setNoSound(p.label); break; }   // 음원이 아직 등록되지 않음
         if (r < repeatCount - 1) await new Promise(res => setTimeout(res, gap * 1000));
       }
+      if (!phAbortRef.current) await new Promise(res => setTimeout(res, 200)); // 여운
     } catch (e) { /* ignore */ }
-    phBusyRef.current = false;
-    setPlaying(null);
+    endRun(token);
   };
 
   // 같은 소리가 나는 단어들만 이어서 읽어 주기
   const playFriends = async (friends, idx) => {
     if (phBusyRef.current || playing || !speak) return;
-    phBusyRef.current = true; phAbortRef.current = false;
-    setPlaying(idx + '-phfriends');
+    const token = beginRun(idx + '-phfriends');
     try {
       for (let fi = 0; fi < friends.length; fi++) {
         if (phAbortRef.current) break;
         await speak(friends[fi]);
-        if (fi < friends.length - 1) await new Promise(res => setTimeout(res, 400));
+        if (phAbortRef.current) break;
+        await new Promise(res => setTimeout(res, fi < friends.length - 1 ? 400 : 200));
       }
     } catch (e) { /* ignore */ }
-    phBusyRef.current = false;
-    setPlaying(null);
+    endRun(token);
   };
 
   const play = async (w, i, mode) => {

@@ -25,6 +25,7 @@ import BookReading from './BookReading';
 import WordSetCourse from './WordSetCourse';
 import WordList from './WordList';
 import ReviewQuiz from './ReviewQuiz';
+import PhonicsCourse from './PhonicsCourse';
 import SlingshotGame from './SlingshotGame';
 import SliceGame from './SliceGame';
 import TraceWord from './TraceWord';
@@ -2745,6 +2746,13 @@ function App() {
                 onWordResult={recordWordResult}
                 onClose={() => setLearnView('home')}
               />
+            ) : learnView === 'phonics' ? (
+              <PhonicsCourse
+                allWords={flattenAllDays(data).flatMap(d => d.words || [])}
+                speak={speakWordSimple}
+                stop={stopWordPlay}
+                onClose={() => setLearnView('home')}
+              />
             ) : (
             <>
             <div className="image-area">
@@ -2989,6 +2997,10 @@ function App() {
                 <span className="msg-text">위에서 Lesson을 선택해 주세요!</span>
               </div>
             )}
+            {/* 파닉스는 Lesson과 상관없이 언제든 할 수 있음 */}
+            <button className="sl-admin-btn phonics-entry" onClick={() => setLearnView('phonics')}>
+              🔤 파닉스 학습
+            </button>
             <button className="sl-admin-btn find-word-btn" onClick={() => setShowFindWord(true)}>
               🔍 단어 찾기
             </button>

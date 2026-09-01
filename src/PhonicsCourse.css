@@ -1,0 +1,205 @@
+/* ============================================================
+   파닉스 학습 — 소리 지도 + 한 소리 학습
+   태블릿 가로모드 기준
+   ============================================================ */
+
+.pc-wrap {
+  padding: 14px 16px 24px;
+  font-family: var(--font-kr, sans-serif);
+}
+
+.pc-head {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.pc-title { font-size: 1.35rem; font-weight: 800; color: #2b3a55; }
+.pc-close {
+  margin-left: auto; border: none; background: #eef1f8; color: #6b7285;
+  width: 40px; height: 40px; border-radius: 12px; font-size: 1.1rem; cursor: pointer;
+}
+.pc-back {
+  border: none; background: #eef1f8; color: #44506b;
+  border-radius: 12px; padding: 10px 14px; min-height: 44px;
+  font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+}
+.pc-lesson-title { font-size: 1.2rem; font-weight: 800; color: #2b3a55; }
+.pc-lesson-title b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; font-size: 1.4rem; }
+
+.pc-steps { margin-left: auto; display: flex; gap: 7px; }
+.pc-steps i {
+  width: 26px; height: 7px; border-radius: 99px; background: #e3e7f0; display: block;
+}
+.pc-steps i.on { background: #27ae60; }
+.pc-steps i.done { background: #a7dcc0; }
+
+.pc-lead {
+  font-size: 0.98rem; color: #6b7285; line-height: 1.6;
+  margin: 0 0 14px; word-break: keep-all;
+}
+.pc-lead b { color: #2b6a45; }
+
+.pc-continue {
+  width: 100%; border: none; border-radius: 16px; padding: 15px;
+  background: #27ae60; color: #fff; box-shadow: 0 3px 0 #1e8c4d;
+  font-family: inherit; font-size: 1.05rem; font-weight: 800;
+  cursor: pointer; margin-bottom: 16px; min-height: 54px;
+}
+.pc-continue b { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.2rem; }
+
+/* ── 소리 지도 ── */
+.pc-stages { display: flex; flex-direction: column; gap: 10px; }
+.pc-stage { background: #f7f9fd; border-radius: 16px; padding: 10px 12px; }
+.pc-stage.locked { opacity: 0.55; }
+
+.pc-stage-head {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  background: none; border: none; padding: 6px 2px; cursor: pointer; text-align: left;
+  min-height: 52px;
+}
+.pc-stage-icon { font-size: 1.6rem; flex-shrink: 0; }
+.pc-stage-name { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.pc-stage-name b { font-size: 1.05rem; font-weight: 800; color: #2b3a55; }
+.pc-stage-name em {
+  font-style: normal; font-size: 0.85rem; color: #8b93a5; word-break: keep-all;
+}
+.pc-stage-ratio {
+  font-size: 0.9rem; font-weight: 800; color: #2b6a45;
+  background: #eafaf1; border-radius: 999px; padding: 5px 11px; flex-shrink: 0;
+}
+
+.pc-stage-bar {
+  height: 6px; background: #e3e7f0; border-radius: 99px; overflow: hidden; margin: 4px 2px 0;
+}
+.pc-stage-bar i { display: block; height: 100%; background: #7ecfa3; border-radius: 99px; }
+
+.pc-sounds {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 9px; margin-top: 12px;
+}
+.pc-sound {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: #fff; border: 2px solid #e3e7f0; border-radius: 14px;
+  padding: 11px 6px; cursor: pointer; min-height: 88px;
+}
+.pc-sound.done { border-color: #a7dcc0; background: #f4fbf7; }
+.pc-sound-label {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 1.25rem; font-weight: 800; color: #e2640f;
+}
+.pc-sound-ko { font-size: 0.92rem; font-weight: 700; color: #44506b; }
+.pc-sound-stars { font-size: 0.72rem; color: #c9ced9; letter-spacing: 1px; }
+
+/* ── 한 소리 학습 ── */
+.pc-panel {
+  background: #f7f9fd; border-radius: 18px; padding: 20px 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.pc-big {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 4rem; font-weight: 800; color: #e2640f; line-height: 1;
+  background: #fff3e0; border-radius: 20px; padding: 14px 34px;
+}
+.pc-ko { font-size: 1.6rem; font-weight: 800; color: #2b3a55; }
+.pc-tip { font-size: 1rem; color: #6b7285; word-break: keep-all; text-align: center; }
+
+.pc-main-btn {
+  border: none; border-radius: 16px; padding: 15px 34px; min-height: 56px;
+  background: #ffb74d; color: #6b3d00; box-shadow: 0 3px 0 #e09b2d;
+  font-family: inherit; font-size: 1.1rem; font-weight: 800; cursor: pointer;
+}
+.pc-main-btn:disabled { opacity: 0.45; box-shadow: none; cursor: default; }
+.pc-nofile { font-size: 0.9rem; color: #b06a2c; word-break: keep-all; text-align: center; }
+
+.pc-sub { font-size: 0.92rem; color: #8b93a5; margin-top: 6px; }
+.pc-word-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.pc-word-card {
+  display: flex; align-items: center; gap: 9px;
+  background: #fff; border: 2px solid #e3e7f0; border-radius: 14px;
+  padding: 11px 16px; min-height: 50px; cursor: pointer;
+}
+.pc-word-card:disabled { opacity: 0.45; cursor: default; }
+.pc-word-text {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 1.35rem; font-weight: 800; color: #44506b; letter-spacing: 1px;
+}
+.pc-word-text .mark { color: #e2640f; background: #fff3e0; border-radius: 5px; padding: 0 2px; }
+.pc-word-play { font-size: 1.1rem; }
+
+.pc-next-btn {
+  border: none; border-radius: 16px; padding: 15px 30px; min-height: 54px;
+  background: #27ae60; color: #fff; box-shadow: 0 3px 0 #1e8c4d;
+  font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer;
+  margin-top: 8px;
+}
+.pc-again-btn {
+  border: none; border-radius: 16px; padding: 15px 30px; min-height: 54px;
+  background: #eef1f8; color: #44506b;
+  font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer;
+  margin-top: 8px;
+}
+
+/* 문제 */
+.pc-q {
+  font-size: 1.15rem; font-weight: 800; color: #2b3a55;
+  text-align: center; word-break: keep-all; line-height: 1.6;
+}
+.pc-q b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; font-size: 1.35rem; }
+.pc-q-hint { font-size: 0.9rem; color: #8b93a5; word-break: keep-all; text-align: center; }
+
+.pc-choices { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.pc-choice {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: #fff; border: 3px solid #e3e7f0; border-radius: 18px;
+  padding: 14px 16px; min-width: 132px;
+}
+.pc-choice.right { border-color: #27ae60; background: #f0fbf5; }
+.pc-choice-face {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 1.6rem; font-weight: 800; color: #44506b; min-height: 40px;
+  display: flex; align-items: center;
+}
+.pc-choice-play {
+  border: 2px solid #ffd27a; background: #fff6e6; color: #a5771a;
+  border-radius: 999px; padding: 9px 16px; min-height: 44px; min-width: 96px;
+  font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+}
+.pc-choice-play:disabled { opacity: 0.4; cursor: default; }
+.pc-choice-pick {
+  border: none; background: #4a90d9; color: #fff; box-shadow: 0 3px 0 #3574b0;
+  border-radius: 12px; padding: 11px 16px; min-height: 46px; min-width: 96px;
+  font-family: inherit; font-size: 0.98rem; font-weight: 800; cursor: pointer;
+}
+.pc-choice-pick:disabled { opacity: 0.4; box-shadow: none; cursor: default; }
+
+/* 글자 짚기 */
+.pc-eye-word { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
+.pc-letter {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 2.4rem; font-weight: 800; color: #44506b;
+  background: #fff; border: 3px solid #e3e7f0; border-radius: 14px;
+  min-width: 56px; min-height: 74px; cursor: pointer;
+}
+.pc-letter.mark { color: #e2640f; background: #fff3e0; border-color: #ffb74d; }
+.pc-letter:disabled { cursor: default; }
+.pc-listen-small {
+  border: 2px solid #ffd27a; background: #fff6e6; color: #a5771a;
+  border-radius: 999px; padding: 10px 18px; min-height: 46px;
+  font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+}
+.pc-listen-small:disabled { opacity: 0.4; cursor: default; }
+
+.pc-result {
+  font-size: 1.1rem; font-weight: 800; word-break: keep-all; text-align: center;
+  border-radius: 14px; padding: 12px 18px; width: 100%; max-width: 460px;
+}
+.pc-result.right { background: #eafaf1; color: #2b6a45; }
+.pc-result.wrong { background: #fdeeee; color: #a34141; }
+.pc-round { font-size: 0.88rem; color: #a8adba; font-weight: 700; }
+
+/* 마무리 */
+.pc-done { gap: 14px; }
+.pc-done-stars { font-size: 2.6rem; letter-spacing: 4px; }
+.pc-done-title { font-size: 1.4rem; font-weight: 800; color: #2b3a55; }
+.pc-done-title b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; }
+.pc-done-score { font-size: 1.05rem; color: #6b7285; }
+.pc-done-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }

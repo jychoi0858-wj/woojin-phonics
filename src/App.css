@@ -3674,6 +3674,17 @@
     box-shadow: 0 1px 0 #3a5fad;
 }
 
+.sl-admin-btn.phonics-entry {
+    background: #e2640f;
+    box-shadow: 0 3px 0 #b34e0b;
+}
+.sl-admin-btn.phonics-entry:hover {
+    box-shadow: 0 5px 0 #b34e0b;
+}
+.sl-admin-btn.phonics-entry:active {
+    box-shadow: 0 1px 0 #b34e0b;
+}
+
 /* ─── 문장 관리 팝업 ─── */
 .modal-fullish {
     display: flex;

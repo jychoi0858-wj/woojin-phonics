@@ -65,12 +65,17 @@ const RULES = [
   { re: /^(great|break|steak)\w*$/, sound: 'long-a', desc: '에이 소리가 나요', mark: /ea/ },
   { re: /^(book|good|look|took|foot|wood|cook|hook|stood|wool)\w*$/, sound: 'oo-short', desc: '짧은 우 소리가 나요', mark: /oo/ },
   { re: /^(know|snow|show|low|slow|grow|blow|throw|yellow|window|below|own|bowl|elbow|pillow|rainbow)\w*$/, sound: 'long-o', desc: '오우 소리가 나요', mark: /ow/ },
+  // th가 목을 울리는 낱말들 (the/this… — 나머지 th는 바람 소리)
+  { re: /^(the|this|that|these|those|they|them|then|there|their|than|though|father|mother|brother|other|weather|together|feather|leather)\w*$/, sound: 'th-voiced', desc: '혀를 물고 목을 울려요', mark: /th/ },
+  // u가 이름 그대로 "유"로 소리 나는 낱말들 (매직 e보다 먼저)
+  { re: /^(cute|use|used|cube|mute|fuse|huge|music|human|unit|uniform|menu|cucumber)\w*$/, sound: 'yoo', desc: '유- 소리가 나요', mark: /u/ },
 
   // r 모음 중 먼저 잡아야 하는 것 (oor/oar 은 모음팀 oo/oa 보다 우선)
   { re: /(oor|oar)/, sound: 'or', desc: '오r 소리가 나요' },
   { re: /ear/, sound: 'ear', desc: '이어r 소리가 나요' },
   { re: /air/, sound: 'air', desc: '에어r 소리가 나요' },
   { re: /are$/, sound: 'air', desc: '에어r 소리가 나요' },       // share, care (sh 규칙보다 먼저)
+  { re: /ure$/, sound: 'ure', desc: '유어r 소리가 나요' },       // pure, sure (매직 e보다 먼저)
 
   // 모음 팀 (두 글자가 한 소리)
   { re: /igh/, sound: 'long-i', desc: '아이 소리가 나요' },
@@ -102,6 +107,14 @@ const RULES = [
   { re: /qu/, sound: 'qu', desc: '쿠 소리가 나요' },
   { re: /wh/, sound: 'wh', desc: '후 소리가 나요' },
   { re: /ck/, sound: 'k', desc: '크 소리가 나요' },
+
+  // c와 g가 e·i·y를 만나면 소리가 바뀜 (단모음 폴백보다 먼저)
+  { re: /^(get|give|given|gift|girl|geese|gear|gecko|giggle|guess|guest|gill)\w*$/, sound: 'g', desc: '그 소리가 나요', mark: /g/ }, // 예외: 딱딱한 g
+  { re: /c(?=[eiy])/, sound: 'soft-c', desc: 'e, i, y 앞에서 c는 스 소리예요' },
+  { re: /g(?=[eiy])/, sound: 'soft-g', desc: 'e, i, y 앞에서 g는 즈 소리예요' },
+
+  // 끝의 a는 힘이 빠져 흐릿한 "어"가 됨 (sofa, banana)
+  { re: /a$/, sound: 'schwa', desc: '힘을 빼고 흐릿하게 어' },
 
   // 단모음 (마지막 폴백) — 끝에 오는 e는 소리가 안 나므로 제외
   { re: /a/, sound: 'short-a', desc: '짧은 애 소리가 나요' },
@@ -191,4 +204,112 @@ export function findSoundFriends(word, allWords = [], limit = 4) {
 // 소리 id → 음원 파일명
 export function soundFile(soundId) {
   return SOUND_FILES[soundId] || '';
+}
+
+// ============================================================
+// 소리 기준으로 단어 찾기 (파닉스 학습 탭용)
+//   findPattern은 "단어 → 대표 소리 하나"를 준다.
+//   여기서는 반대로 "소리 → 그 소리가 든 단어들"이 필요하다.
+//   단, 자음 하나짜리 소리(m, s, t …)는 RULES에 없으므로
+//   첫 글자로 판단한다. (파닉스 초반은 첫소리 인식이 목표)
+// ============================================================
+
+// 소리 id → 그 소리로 시작하는 글자들
+const START_LETTERS = {
+  'b': ['b'], 'k': ['c', 'k'], 'd': ['d'], 'f': ['f'], 'g': ['g'], 'h': ['h'],
+  'j': ['j'], 'l': ['l'], 'm': ['m'], 'n': ['n'], 'p': ['p'], 'r': ['r'],
+  's': ['s'], 't': ['t'], 'v': ['v'], 'w': ['w'], 'y': ['y'], 'z': ['z'],
+};
+
+// 첫 글자 판정에서 빼야 하는 조합 (다른 소리가 되는 경우)
+const START_EXCLUDE = {
+  'k': /^(ch|ci|ce|cy)/,   // chip, city, cent → c가 "크"가 아님
+  'g': /^(gn|ge|gi|gy)/,   // gnome, gem, giant → g가 "그"가 아님
+  's': /^(sh)/,            // ship → "스"가 아님
+  't': /^(th)/,            // thin → "트"가 아님
+  'w': /^(wh|wr)/,         // what, wrist → "우"가 아님
+  'p': /^(ph)/,            // phone → "프(f)"
+};
+
+/** 이 단어에 이 소리가 들어 있는가 */
+export function wordHasSound(word, soundId) {
+  const w = norm(word);
+  if (!w || w.length < 2) return false;
+  const letters = START_LETTERS[soundId];
+  if (letters) {
+    const ex = START_EXCLUDE[soundId];
+    if (ex && ex.test(w)) return false;
+    return letters.includes(w[0]);
+  }
+  if (soundId === 'ks') return /x/.test(w);
+  const p = findPattern(w);
+  return !!p && p.sound === soundId;
+}
+
+/**
+ * 이 소리가 들어간 단어 모으기
+ * @param soundId 소리 id
+ * @param allWords 등록된 모든 단어 (아이가 이미 배운 것 우선)
+ * @param extras  기본 예시 단어 (등록 단어가 모자랄 때 채움)
+ * @param limit   최대 개수
+ */
+export function wordsForSound(soundId, allWords = [], extras = [], limit = 6) {
+  const seen = new Set();
+  const out = [];
+  const push = (w) => {
+    const n = norm(w);
+    if (!n || n.length < 2 || seen.has(n)) return;
+    seen.add(n);
+    out.push(n);
+  };
+  for (const w of allWords) {
+    if (out.length >= limit) break;
+    if (wordHasSound(w, soundId)) push(w);
+  }
+  for (const w of extras) {
+    if (out.length >= limit) break;
+    push(w);
+  }
+  return out;
+}
+
+/**
+ * 이 단어에서 그 소리를 내는 글자 위치 (원본 단어 기준)
+ * 없으면 빈 배열
+ */
+export function marksForSound(word, soundId) {
+  const raw = word || '';
+  // 정규화 위치 → 원본 위치 대응표
+  let w = '';
+  const map = [];
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i].toLowerCase();
+    if (c >= 'a' && c <= 'z') { w += c; map.push(i); }
+  }
+  if (!w) return [];
+  if (START_LETTERS[soundId]) return map.length ? [map[0]] : [];
+  if (soundId === 'ks') {
+    const i = w.indexOf('x');
+    return i >= 0 ? [map[i]] : [];
+  }
+  const p = findPattern(w);
+  if (!p || p.sound !== soundId) return [];
+  // findPattern은 정규화된 단어 기준으로 이미 원본 인덱스를 돌려주지만,
+  // 여기서는 정규화 단어를 넘겼으므로 그대로 매핑한다.
+  return (p.marks || []).map(i => map[i]).filter(i => i !== undefined);
+}
+
+/** 이 소리가 "들어 있지 않은" 단어 모으기 (오답 보기용) */
+export function wordsWithoutSound(soundId, pool = [], count = 2) {
+  const out = [];
+  const seen = new Set();
+  for (const w of pool) {
+    const n = norm(w);
+    if (!n || n.length < 2 || seen.has(n)) continue;
+    if (wordHasSound(n, soundId)) continue;
+    seen.add(n);
+    out.push(n);
+    if (out.length >= count) break;
+  }
+  return out;
 }
