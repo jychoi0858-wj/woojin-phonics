@@ -197,9 +197,87 @@ export async function playPhonicsSound(fileName, onStart) {
   } catch (e) { return false; }
 }
 
+/** 미리 준비된 음원의 길이(초). 준비 전이면 0 */
+export function phonicsDuration(fileName) {
+  const e = decoded.get(fileName);
+  return e && e.audio ? e.audio.duration : 0;
+}
+
+// ─── 여러 조각을 이어 재생 (이어 읽기용) ───
+let seqSources = [];
+let seqTimers = [];
+let seqFinish = null;
+
+/**
+ * 조각들을 오디오 클럭에 한 번에 예약해 재생한다.
+ * 소리 시작 시각과 화면 강조 시각을 같은 기준으로 계산하므로 싱크가 어긋나지 않는다.
+ *
+ * @param items   [{ file, hold }]  hold = 다음 조각으로 넘어가기까지의 시간(초)
+ * @param onIndex (i) => void       그 조각의 소리가 스피커에서 나기 시작할 때 호출
+ */
+export async function playPhonicsSequence(items = [], onIndex) {
+  const prepared = [];
+  for (const it of items) {
+    const e = it.file ? await getBuffer(it.file) : null;
+    prepared.push({ hold: it.hold, audio: e ? e.audio : null, gain: e ? e.gain : 1 });
+  }
+  try {
+    const c = audioCtx();
+    stopPhonicsSound();                                  // 이전 재생 정리
+
+    const lead = 0.06;                                   // 예약 여유
+    const latency = c.outputLatency || c.baseLatency || 0; // 스피커까지 걸리는 시간
+    const t0 = c.currentTime + lead;
+    let cum = 0;
+    let endAt = t0;
+
+    prepared.forEach((p, i) => {
+      const at = t0 + cum;
+      if (p.audio) {
+        const src = c.createBufferSource();
+        const vol = c.createGain();
+        vol.gain.value = p.gain;
+        src.buffer = p.audio;
+        src.connect(vol);
+        vol.connect(c.destination);
+        src.start(at);
+        seqSources.push(src);
+        if (at + p.audio.duration > endAt) endAt = at + p.audio.duration;
+      } else if (at + 0.25 > endAt) {
+        endAt = at + 0.25;
+      }
+      if (onIndex) {
+        // 강조도 같은 시각 기준 — 스피커 지연을 더해 소리와 맞춘다
+        const delayMs = (at - c.currentTime + latency) * 1000;
+        seqTimers.push(setTimeout(() => onIndex(i), Math.max(0, delayMs)));
+      }
+      cum += p.hold != null ? p.hold : (p.audio ? p.audio.duration : 0.25);
+    });
+
+    await new Promise((resolve) => {
+      seqFinish = () => { seqFinish = null; resolve(); };
+      const ms = (endAt - c.currentTime + latency + 0.08) * 1000;
+      seqTimers.push(setTimeout(() => { if (seqFinish) seqFinish(); }, Math.max(0, ms)));
+    });
+    return true;
+  } catch (e) {
+    return false;
+  } finally {
+    seqSources = [];
+    seqTimers.forEach(clearTimeout);
+    seqTimers = [];
+  }
+}
+
 export function stopPhonicsSound() {
   if (curSource) { try { curSource.stop(); } catch (e) { /* */ } curSource = null; }
   if (curFinish) { const f = curFinish; curFinish = null; f(); } // 대기 중인 재생도 즉시 종료
+  // 예약해 둔 이어 읽기도 모두 취소
+  seqTimers.forEach(clearTimeout);
+  seqTimers = [];
+  seqSources.forEach(s => { try { s.stop(); } catch (e) { /* */ } });
+  seqSources = [];
+  if (seqFinish) { const f = seqFinish; seqFinish = null; f(); }
 }
 
 /** 이 소리가 등록되어 있는지 (버튼 표시 여부 판단용) */

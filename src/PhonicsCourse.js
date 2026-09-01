@@ -3,7 +3,7 @@ import { STAGES, SOUND_INFO, aloneNote, chunkNote } from './phonicsData';
 import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes, wordHasSound } from './phonics';
 import { customWordsOf, addCustomWord, removeCustomWord } from './phonicsWords';
 import PronunceCheck from './PronunceCheck';
-import { playPhonicsSound, stopPhonicsSound, preloadPhonicsSounds } from './phonicsAudio';
+import { playPhonicsSound, stopPhonicsSound, preloadPhonicsSounds, playPhonicsSequence, phonicsDuration } from './phonicsAudio';
 import { loadProgress, recordSound, starsOf, stageRatio, nextSound } from './phonicsProgress';
 import useBackHandler from './useBackHandler';
 import './PhonicsCourse.css';
@@ -343,8 +343,9 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
 
   // 천천히 → 조금 빠르게 → 붙여서
   //   마지막 패스는 앞 소리가 끝나기 전에 다음 조각을 시작해 실제로 이어 읽는 소리에 가깝게 만든다.
-  const BLEND_GAPS = [900, 420, 90];
-  const FAST_STEP = 420;                // 마지막 패스에서 다음 조각으로 넘어가는 간격
+  const BLEND_GAPS = [900, 420, 60];    // 조각 소리가 끝난 뒤 쉬는 시간(ms)
+  const FAST_HOLD = 0.36;               // 마지막 패스: 조각 하나에 쓰는 최대 시간(초)
+  const SILENT_HOLD = 0.28;             // 묵음 글자를 보여 주는 시간(초)
   const runBlend = async () => {
     if (busy || !blendChunks.length) return;
     const t = begin('blend');
@@ -355,36 +356,29 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
 
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+    // 조각마다 실제 음원 길이를 알아 둔다 (길이가 300~900ms로 제각각이라 고정 간격은 어긋남)
+    const durs = blendChunks.map(ch => phonicsDuration(soundFile(ch.sound)) || SILENT_HOLD);
+    if (blendChunks.some(ch => ch.sound && !phonicsDuration(soundFile(ch.sound)))) setNoFile(true);
+
     for (let pass = 0; pass < BLEND_GAPS.length; pass++) {
       if (abortRef.current) break;
       setBlendPass(pass);
       const fast = pass === BLEND_GAPS.length - 1;   // 마지막은 붙여 읽기
-      let pending = null;                            // 아직 끝나지 않은 조각 소리
-      for (let ci = 0; ci < blendChunks.length; ci++) {
-        if (abortRef.current) break;
-        const ch = blendChunks[ci];
-        const isLast = ci === blendChunks.length - 1;
+      const gapSec = BLEND_GAPS[pass] / 1000;
 
-        if (!ch.sound) {
-          setBlendActive(ci);                        // 묵음 글자는 표시만
-          await sleep(fast ? 260 : 250);
-        } else if (fast && !isLast) {
-          // 앞 소리를 끝까지 기다리지 않고 다음 조각으로 (다음 재생이 앞 소리를 자름)
-          // 이 패스에서는 강조를 바로 켠다 — onStart를 기다리면 순서가 뒤집힐 수 있음
-          setBlendActive(ci);
-          pending = playPhonicsSound(soundFile(ch.sound)).catch(() => {});
-          await sleep(FAST_STEP);
-        } else {
-          // 강조는 실제로 소리가 나기 시작할 때 (onStart)
-          const ok = await playPhonicsSound(soundFile(ch.sound), () => setBlendActive(ci));
-          if (!ok) { setNoFile(true); setBlendActive(ci); }
-        }
-        await sleep(BLEND_GAPS[pass]);
-      }
-      if (pending && !abortRef.current) await pending;  // 마지막 조각 소리가 끝날 때까지
-      setBlendActive(-1);
+      const items = blendChunks.map((ch, i) => ({
+        file: soundFile(ch.sound),
+        // 앞 두 패스: 소리를 끝까지 들려주고 쉼 / 마지막: 소리가 끝나기 전에 다음 조각으로
+        hold: ch.sound
+          ? (fast ? Math.min(durs[i], FAST_HOLD) + gapSec : durs[i] + gapSec)
+          : SILENT_HOLD + gapSec,
+      }));
+
+      // 소리와 강조를 같은 오디오 클럭에 함께 예약 → 싱크가 어긋나지 않음
+      await playPhonicsSequence(items, (i) => setBlendActive(i));
       if (abortRef.current) break;
-      await new Promise(r => setTimeout(r, fast ? 200 : 350));
+      setBlendActive(-1);
+      await sleep(fast ? 200 : 300);
     }
     if (!abortRef.current) {
       setBlendPass(3);                       // 조각이 하나로 합쳐짐
