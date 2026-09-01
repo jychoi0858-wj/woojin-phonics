@@ -235,6 +235,15 @@ const IRREGULAR = new Set([
   'hour', 'machine', 'nothing', 'orange', 'quiet',
   'shoe', 'shoes', 'special', 'squirrel', 'straight', 'sword',
   'vegetable', 'wednesday', 'whole', 'wolf', 'woman',
+  // 아주 자주 쓰이는 기능어 — 규칙 밖이라 통째로 익힌다
+  'the', 'is', 'as', 'his', 'you', 'use', 'used', 'uses', 'using',
+  'both', 'having', 'coming', 'giving', 'living', 'loving', 'ones',
+  'sign', 'signed', 'signs', 'signing', 'thus', 'league', 'waste', 'george',
+  'something', 'someone', 'somebody', 'sometimes', 'somewhere', 'somehow',
+  'goes', 'want', 'wants', 'wanted', 'water', 'from', 'for', 'or', 'nor',
+  'work', 'works', 'worked', 'worker', 'word', 'words', 'worth', 'worry',
+  'over', 'other', 'others', 'ever', 'every', 'never', 'even', 'open',
+  'before', 'begin', 'behind', 'below', 'become', 'between',
 ]);
 
 /** 파닉스 규칙으로 읽히지 않는 단어인지 */
@@ -255,8 +264,9 @@ const GRAPHEMES = [
   'tion', 'sion', 'ture', 'augh', 'eigh', 'ough',
   'igh', 'air', 'ear', 'are', 'ure', 'tch', 'dge',
   'sh', 'ch', 'th', 'ng', 'ck', 'qu', 'wh', 'ph', 'gh', 'kn', 'gn', 'wr',
+  'our', 'oor', 'oar', 'gue',
   'ai', 'ay', 'ea', 'ee', 'ey', 'ie', 'oa', 'oe', 'oi', 'oy', 'ou', 'ow', 'oo',
-  'ue', 'ui', 'au', 'aw', 'ar', 'er', 'ir', 'or', 'ur',
+  'ue', 'ui', 'au', 'aw', 'ew', 'ar', 'er', 'ir', 'or', 'ur',
   // 겹자음은 한 소리 (ball의 ll, mess의 ss)
   'll', 'ss', 'ff', 'zz', 'tt', 'dd', 'pp', 'bb', 'gg', 'nn', 'mm', 'rr', 'cc',
 ];
@@ -266,16 +276,17 @@ const G_SOUND = {
   kn: 'silent-kn', gn: 'silent-gn', wr: 'silent-wr',
   ai: 'long-a', ay: 'long-a', ea: 'long-e', ee: 'long-e', ey: 'long-e', ie: 'long-i',
   oa: 'long-o', oe: 'long-o', oi: 'oi', oy: 'oi', ou: 'ou', ow: 'ou',
-  oo: 'oo-long', ue: 'long-u', ui: 'oo-long', au: 'aw', aw: 'aw',
+  oo: 'oo-long', ue: 'long-u', ui: 'oo-long', au: 'aw', aw: 'aw', ew: 'oo-long',
   ar: 'ar', er: 'er', ir: 'er', or: 'or', ur: 'er',
   igh: 'long-i', air: 'air', ear: 'ear', are: 'air', ure: 'ure', tch: 'ch', dge: 'j',
   tion: 'sh', sion: 'sh', ture: 'ch', augh: 'aw', eigh: 'long-a', ough: 'aw', gh: 'g',
+  our: 'or', oor: 'or', oar: 'or', gue: 'g',
   ll: 'l', ss: 's', ff: 'f', zz: 'z', tt: 't', dd: 'd', pp: 'p', bb: 'b',
   gg: 'g', nn: 'n', mm: 'm', rr: 'r', cc: 'k',
   b: 'b', c: 'k', d: 'd', f: 'f', g: 'g', h: 'h', j: 'j', k: 'k', l: 'l', m: 'm',
   n: 'n', p: 'p', r: 'r', s: 's', t: 't', v: 'v', w: 'w', x: 'ks', y: 'y', z: 'z',
 };
-const LONG_V = { a: 'long-a', e: 'long-e', i: 'long-i', o: 'long-o', u: 'long-u' };
+const LONG_V = { a: 'long-a', e: 'long-e', i: 'long-i', o: 'long-o', u: 'long-u', y: 'long-i' };
 const SHORT_V = { a: 'short-a', e: 'short-e', i: 'short-i', o: 'short-o', u: 'short-u' };
 
 /**
@@ -283,16 +294,36 @@ const SHORT_V = { a: 'short-a', e: 'short-e', i: 'short-i', o: 'short-o', u: 'sh
  * @returns [{ text, sound, silent }]  silent=true면 소리가 나지 않는 글자
  */
 export function splitGraphemes(word) {
-  const w = norm(word);
-  if (!w) return [];
+  const full = norm(word);
+  if (!full) return [];
   // 예외 단어는 쪼개지 않음 — 통째로 익히는 단어
-  if (IRREGULAR.has(w)) return [{ text: w, sound: null, whole: true }];
-  const magicE = /[aeiou][bcdfgklmnprstvz]e$/.test(w);   // cake, kite, rope …
+  if (IRREGULAR.has(full)) return [{ text: full, sound: null, whole: true }];
+
+  // 어미를 먼저 떼어 낸다
+  //   going을 g·oi·ng로, times를 t·i·m·e·s로 잘못 묶지 않게
+  let w = full;
+  let suffix = null;                                     // 'ing' | 'ed' | 's'
+  if (/[a-z]{2,}ing$/.test(full)) { w = full.slice(0, -3); suffix = 'ing'; }
+  else if (/[a-z]{3,}ed$/.test(full) && !/(eed|ied|ded|ted)$/.test(full)) { w = full.slice(0, -2); suffix = 'ed'; }
+  else if (/[a-z]{3,}s$/.test(full) && !/(ss|us|is|as|ous)$/.test(full)) { w = full.slice(0, -1); suffix = 's'; }
+
+  // 매직 e로 길어지는 모음의 위치
+  //   making·based처럼 e를 떼고 어미를 붙인 낱말은 e가 있는 것처럼 본다
+  let longVowelAt = -1;
+  if (/[aeiouy][bcdfgklmnprstvzc]e$/.test(w)) longVowelAt = w.length - 3;   // cake, kite, rope, style
+  // making·placed처럼 e를 떼고 어미를 붙인 낱말만 (dogs·fans 같은 복수는 아님)
+  else if ((suffix === 'ing' || suffix === 'ed') && /[aeiouy][bcdfgklmnprstvzc]$/.test(w) && w.length >= 3) {
+    longVowelAt = w.length - 2;
+  }
+  const magicE = longVowelAt >= 0 && longVowelAt === w.length - 3 && w[w.length - 1] === 'e';
+  // 앞을 볼 때는 떼어 둔 어미까지 본다 (changed의 g 뒤에 e가 있는 걸 알아야 함)
+  const look = (k) => (k < w.length ? w[k] : full[k]) || '\u0000';
   const out = [];
   let i = 0;
   while (i < w.length) {
-    // 매직 e의 끝 e는 소리가 없음
-    if (magicE && i === w.length - 1 && w[i] === 'e') {
+    // 끝의 e는 소리가 없음 (매직 e거나, 네 글자 이상인 낱말의 끝 e)
+    //   be·he·we·me처럼 짧은 낱말의 e는 소리가 남
+    if (i === w.length - 1 && w[i] === 'e' && (magicE || w.length >= 4)) {
       out.push({ text: 'e', sound: null, silent: true });
       i += 1;
       continue;
@@ -301,7 +332,19 @@ export function splitGraphemes(word) {
     for (const g of GRAPHEMES) {
       if (!w.startsWith(g, i)) continue;
       if ((g === 'kn' || g === 'gn' || g === 'wr' || g === 'gh') && i !== 0) continue;   // 단어 맨 앞에서만
-      if ((g === 'are' || g === 'ure' || g === 'ture') && i + g.length !== w.length) continue; // 끝에서만
+      if ((g === 'are' || g === 'ure' || g === 'ture' || g === 'tion' || g === 'sion')
+        && i + g.length !== w.length) continue;   // 끝에서만 (national의 n을 먹지 않게)
+      // around·away의 첫 a는 따로 (ar로 묶이면 안 됨)
+      if (A_SCHWA_WORDS.test(w) && i === 0 && g.length > 1) continue;
+      // ng는 e·i·y 앞에서 성립하지 않음 (change, danger)
+      if (g === 'ng' && 'eiy'.includes(look(i + 2) || 'x')) continue;
+      // 짧은 낱말의 첫 음절에서 r 뒤에 모음이 오면 r 모음이 아님 (very = ve+ry, hero = he+ro)
+      //   단 그 모음이 끝의 묵음 e면 r 모음이 맞다 (more, core, store)
+      if (['ar', 'er', 'ir', 'or', 'ur'].includes(g) && w.length <= 5 && i <= 1) {
+        const after = w[i + 2];
+        const finalSilentE = after === 'e' && i + 2 === w.length - 1;
+        if (after && 'aeiouy'.includes(after) && !finalSilentE) continue;
+      }
       hit = g;
       break;
     }
@@ -313,8 +356,8 @@ export function splitGraphemes(word) {
     const c = w[i];
     const next = w[i + 1];
     let sound;
-    if (SHORT_V[c]) {
-      if (magicE && i === w.length - 3) {
+    if (SHORT_V[c] || (c === 'y' && i === longVowelAt)) {
+      if (i === longVowelAt) {
         sound = LONG_V[c];                     // 매직 e 앞의 모음은 길게 (cake의 a)
       } else if (c === 'a' && i > 0 && w[i - 1] === 'w') {
         sound = 'short-o';                     // w 뒤의 a는 "아" (want, watch, wash)
@@ -322,38 +365,72 @@ export function splitGraphemes(word) {
         sound = 'long-o';                      // 단어 끝의 o는 "오우" (go, also, hello)
       } else if (c === 'a' && i === w.length - 1 && w.length > 1) {
         sound = 'schwa';                       // 단어 끝의 a는 힘 빠진 "어" (sofa, panda)
+      } else if (i === w.length - 1 && w.length > 1) {
+        // 열린 음절 — 단어 끝의 모음은 이름 소리 (be, he, she, hi, menu)
+        sound = c === 'u' ? 'yoo' : LONG_V[c];
       } else {
         sound = SHORT_V[c];
       }
+    } else if (c === 'n' && (next === 'k' || (next === 'g' && !'eiy'.includes(look(i + 2) || 'x')))) {
+      sound = 'ng';                            // n이 k·g 앞에서는 "응" (think, thank / change는 예외)
     } else if (c === 'y' && i > 0 && i < w.length - 1) {
       sound = 'short-i';                       // 단어 가운데 y는 짧은 이 (gym, myth, crystal)
-    } else if (c === 'c' && 'eiy'.includes(next)) {
+    } else if (c === 'c' && i > 0 && w[i - 1] === 's' && 'eiy'.includes(look(i + 1))) {
+      sound = null; // scene, science — s 뒤의 c는 소리가 없음
+    } else if (c === 'c' && 'eiy'.includes(look(i + 1))) {
       sound = 'soft-c';
-    } else if (c === 'g' && 'eiy'.includes(next)) {
+    } else if (c === 'g' && 'eiy'.includes(look(i + 1))) {
       sound = 'soft-g';
+    } else if (c === 'u' && i > 0 && w[i - 1] === 'g' && 'aeiouy'.includes(look(i + 1))) {
+      sound = null; // guy, guess, guide — g 뒤의 u는 소리가 없음
     } else if (c === 'y' && i === w.length - 1 && w.length >= 2) {
       // 단어 끝의 y는 모음 — 앞에 다른 모음이 있으면 "이-"(city), 없으면 "아이"(fly)
       sound = /[aeiou]/.test(w.slice(0, i)) ? 'long-e' : 'long-i';
     } else {
       sound = G_SOUND[c] || null;
     }
-    out.push({ text: c, sound });
+    out.push({ text: c, sound, ...(sound === null && 'cu'.includes(c) ? { silent: true } : {}) });
     i += 1;
   }
-  return applyBlendExceptions(w, out);
+  // 떼어 둔 어미 붙이기
+  if (suffix === 'ing') {
+    out.push({ text: 'i', sound: 'short-i' });
+    out.push({ text: 'ng', sound: 'ng' });
+  } else if (suffix === 'ed') {
+    const last = out.length ? out[out.length - 1].text : '';
+    const voiceless = ['p', 'k', 'c', 'f', 's', 'x', 'sh', 'ch', 'th', 'ck', 'ss', 'ff', 'ph', 'tch',
+      'pp', 'tt', 'kk', 'soft-c'];
+    if (last === 't' || last === 'd') out.push({ text: 'ed', sound: 'd', tail: 'id' });   // wanted
+    else if (voiceless.includes(last)) out.push({ text: 'ed', sound: 't' });              // jumped
+    else out.push({ text: 'ed', sound: 'd' });                                            // played
+  } else if (suffix === 's') {
+    out.push({ text: 's', sound: 's' });       // "즈"인지는 아래에서 판정
+  }
+  return applyBlendExceptions(full, out);
 }
 
 // 규칙만으로는 틀리는 낱말들 보정
 const OO_SHORT_WORDS = /^(book|good|look|took|foot|wood|cook|hook|stood|wool|hood|shook|brook|crook)\w*$/;
 const YOO_WORDS = /^(cute|use|used|cube|mute|fuse|huge|music|human|unit|uniform|menu|cucumber)\w*$/;
-const TH_VOICED_WORDS = /^(the|this|that|these|those|they|them|then|there|their|than|though|father|mother|brother|other|weather|together|feather|leather)\w*$/;
+const TH_VOICED_WORDS = /^(the|this|that|these|those|they|them|then|there|their|than(?!k)|though|with(?!out|in)|father|mother|brother|other|another|weather|together|feather|leather|whether|either|neither|rather|gather|northern|southern)\w*$/;
 const EY_LONG_A_WORDS = /^(they|grey|obey|prey|hey|whey|convey|survey)$/;
+// g가 e·i·y 앞이어도 딱딱한 "그"로 소리 나는 낱말
+// 앞의 a가 힘 빠진 "어"로 소리 나는 낱말 (a·round — ar로 묶이면 안 됨)
+const A_SCHWA_WORDS = /^a(round|way|bout|gain|lone|go|cross|sleep|gree|live|mount|part|side|head|wake|maze|dopt|dult|larm)/;
+const HARD_G_WORDS =/^(get|gets|getting|give|gives|given|giving|gift|girl|girls|geese|gear|gecko|giggle|guess|guest|gill|begin|forget|together|tiger|anger|finger|longer|bigger|sugar)\w*$/;
 // ow가 "아우"가 아니라 "오우"인 낱말 (findPattern의 예외 목록과 같은 기준)
 const OW_LONG_O_WORDS = /^(know|snow|show|low|slow|grow|blow|throw|crow|row|mow|tow|flow|glow|bow|own|owe|bowl|yellow|window|below|elbow|pillow|rainbow|shadow|arrow|narrow|follow|hollow|borrow|tomorrow|snowman)\w*$/;
 // 위 목록의 앞부분과 겹치지만 실제로는 "아우"인 낱말 (flow→flower, show→shower)
 const OW_OU_WORDS = /^(flower|power|tower|shower|towel|vowel|coward|allow|however|browse|growl|howl|owl|prowl|crowd|crown|drown|clown|frown|down|town|brown|gown)\w*$/;
 // ea가 짧은 "에"인 낱말
-const EA_SHORT_E_WORDS = /^(bread|head|dead|deaf|ready|already|heavy|health|breath|breakfast|sweater|feather|leather|weather|instead|meant|pleasant|treasure|measure)\w*$/;
+const EA_SHORT_E_WORDS = /^(bread|head|dead|deaf|death|ready|already|heavy|health|breath|breadth|breakfast|sweater|sweat|threat|feather|leather|weather|instead|meant|spread|wealth|dealt|pleasant|treasure|measure)\w*$/;
+// ear가 "어r"인 낱말 (learn) / "에어r"인 낱말 (bear)
+const EAR_AS_ER_WORDS = /^(learn|heard|earth|early|earn|search|pearl|yearn|rehearse)\w*$/;
+const EAR_AS_AIR_WORDS = /^(bear|pear|wear|tear|swear|beard)\w*$/;
+// ch가 "크"인 낱말
+const CH_AS_K_WORDS = /^(chris|christ|christmas|school|schedule|scheme|chemical|chemist|chorus|echo|ache|character|anchor|stomach|mechanic|orchestra|architect|technology|technical)\w*$/;
+// ou가 "오우"인 낱말
+const OU_LONG_O_WORDS = /^(soul|shoulder|boulder|poultry)\w*$/;
 // ie가 "이-"인 낱말 (아니면 "아이" — pie, tie, lie)
 const IE_LONG_E_WORDS = /^(field|chief|piece|believe|thief|brief|niece|shield|priest|achieve|relief)\w*$/;
 
@@ -385,7 +462,8 @@ function applySilentLetters(w, chunks) {
     const i = chunks.findIndex(c => c.text === letter);
     if (i >= 0) chunks[i].sound = want;
   };
-  longVowel('long-o', /o(ld|lt|st|mb)$/, 'o');   // old, most, comb
+  longVowel('long-o', /o(ld|lt|mb)$/, 'o');       // old, bolt, comb
+  if (/^(most|post|host|ghost|almost)\w*$/.test(w)) longVowel('long-o', /ost/, 'o');
   longVowel('long-i', /i(nd|ld|mb)$/, 'i');      // find, child, climb
 
   // apple, little, table — 끝의 le는 한 덩어리로 "을"
@@ -403,28 +481,68 @@ function applySilentLetters(w, chunks) {
     }
   }
 
-  // 과거형 -ed — jumped는 "트", played는 "드", wanted는 "이드"
-  //   bed·red처럼 과거형이 아닌 짧은 낱말에는 적용하지 않는다
-  const m = chunks.length;
-  if (w.length >= 5 && /[a-z]ed$/.test(w) && m >= 3 && chunks[m - 1].text === 'd' && chunks[m - 2].text === 'e') {
-    const before = chunks[m - 3] ? chunks[m - 3].text : '';
-    const voiceless = ['p', 'k', 'c', 'f', 's', 'x', 'sh', 'ch', 'th', 'ck', 'ss', 'ff', 'ph'];
-    if (before === 't' || before === 'd') {
-      chunks.splice(m - 2, 2, { text: 'ed', sound: 'd', tail: 'id' });   // wanted, needed
-    } else if (voiceless.includes(before)) {
-      chunks.splice(m - 2, 2, { text: 'ed', sound: 't', tail: 't' });    // jumped, looked
-    } else {
-      chunks.splice(m - 2, 2, { text: 'ed', sound: 'd', tail: 'd' });    // played, opened
-    }
+  // 복수형 -s — dogs·birds·years는 "즈", cats·maps는 "스"
+  //   앞이 목소리가 울리는 소리일 때만 "즈"로 본다. (this·bus·yes처럼 모음 뒤는 "스")
+  const k = chunks.length;
+  if (k >= 2 && chunks[k - 1].text === 's') {
+    // 묵음 e는 건너뛰고 그 앞 소리를 본다 (times → m 뒤라서 "즈")
+    let bi = k - 2;
+    while (bi > 0 && chunks[bi].silent) bi--;
+    const bt = chunks[bi].text;
+    const voicedCons = ['b', 'd', 'g', 'l', 'm', 'n', 'r', 'v', 'w', 'z', 'ng',
+      'll', 'nn', 'mm', 'rr', 'dd', 'gg', 'bb', 'zz',
+      'ar', 'er', 'ir', 'or', 'ur', 'air', 'ear', 'ure'];   // r로 끝나는 소리도 유성
+    if (voicedCons.includes(bt)) chunks[k - 1].sound = 'z';
   }
 
-  // 복수형 -s — dogs는 "즈", cats는 "스"
-  const k = chunks.length;
-  if (k >= 2 && chunks[k - 1].text === 's' && w.length > 2) {
-    const before = chunks[k - 2];
-    const bt = before.text;
-    const voicelessEnd = ['p', 'k', 't', 'f', 'ck', 'th', 'ph', 'tt', 'pp'];
-    if (!voicelessEnd.includes(bt)) chunks[k - 1].sound = 'z';
+  // -nce, -nse 앞의 모음은 짧게 (since, dance, fence — nice·rice와 다름)
+  if (/[aeiou]n[cs]e$/.test(w)) {
+    const i = chunks.findIndex((c, k) => 'aeiou'.includes(c.text) && chunks[k + 1] && chunks[k + 1].text === 'n');
+    if (i >= 0 && SHORT_V[chunks[i].text]) chunks[i].sound = SHORT_V[chunks[i].text];
+  }
+  // -ose, -ese, -ease로 끝나면 s가 "즈" (these, those, please, nose)
+  if (/(ose|ese|ease|eeze|aise)$/.test(w) && !/oose$/.test(w)) {
+    for (const c of chunks) if (c.text === 's') c.sound = 'z';
+  }
+  // 모음 팀 뒤의 복수 s도 "즈" (days, boys, trees) — 단 -ous는 "스" (famous)
+  if (!/ous$/.test(w) && chunks.length >= 2) {
+    const last = chunks[chunks.length - 1];
+    const prev = chunks[chunks.length - 2];
+    const teams = ['ai', 'ay', 'ea', 'ee', 'ey', 'ie', 'oa', 'oe', 'oi', 'oy', 'ow', 'oo', 'ue', 'ew',
+      'aw', 'au', 'our', 'oor', 'oar', 'igh'];
+    if (last.text === 's' && teams.includes(prev.text)) last.sound = 'z';
+  }
+  // 앞의 a가 힘 빠진 "어"인 낱말 (around, away, again)
+  if (A_SCHWA_WORDS.test(w) && chunks[0] && chunks[0].text === 'a') {
+    chunks[0].sound = 'schwa';
+  }
+  // s가 "즈"로 소리 나는 낱말 (music, easy, visit)
+  if (/^(music|musical|museum|visit|easy|user|usual|result|present|reason|season|desert|desire|resort|rise|wise|these|those|choose|nose|rose|close|cheese|please|noise|pause|because)\w*$/.test(w)) {
+    // 첫 글자 s는 그대로 (season의 앞 s는 "스", 뒤 s만 "즈")
+    chunks.forEach((c, i) => { if (i > 0 && c.text === 's') c.sound = 'z'; });
+  }
+  // ange는 "에인지" (change, range) — dance의 짧은 a와 다름
+  if (/^(change|range|strange|angel|danger|arrange|exchange)\w*$/.test(w)) {
+    const i = chunks.findIndex(c => c.text === 'a');
+    if (i >= 0) chunks[i].sound = 'long-a';
+  }
+  // our가 "아우어r"인 낱말 (our, flour, sour — four의 "오r"와 다름)
+  if (/^(our|ours|flour|sour|scour|devour|hourly)$/.test(w)) {
+    const i = chunks.findIndex(c => c.text === 'our');
+    if (i >= 0) chunks.splice(i, 1, { text: 'ou', sound: 'ou' }, { text: 'r', sound: 'r' });
+  }
+  // ou가 "우-"인 낱말 (group, soup)
+  if (/^(group|soup|youth|route|coupon|wound|croup)\w*$/.test(w)) {
+    for (const c of chunks) if (c.text === 'ou') c.sound = 'oo-long';
+  }
+
+  // get, give — g가 e·i 앞이어도 딱딱한 "그"
+  if (HARD_G_WORDS.test(w)) {
+    for (const c of chunks) if (c.text === 'g' && c.sound === 'soft-g') c.sound = 'g';
+  }
+  // few, view — ew가 "유-"
+  if (/^(few|view|review|pew|nephew)\w*$/.test(w)) {
+    for (const c of chunks) if (c.text === 'ew') c.sound = 'yoo';
   }
   return chunks;
 }
@@ -457,6 +575,19 @@ function applyBlendExceptions(w, chunks) {
   if (EA_SHORT_E_WORDS.test(w)) {
     for (const c of chunks) if (c.text === 'ea') c.sound = 'short-e';
   }
+  // ear — learn은 "어r", bear는 "에어r"
+  if (EAR_AS_ER_WORDS.test(w)) { for (const c of chunks) if (c.text === 'ear') c.sound = 'er'; }
+  if (EAR_AS_AIR_WORDS.test(w)) { for (const c of chunks) if (c.text === 'ear') c.sound = 'air'; }
+  // ch가 "크"인 낱말 (school, christmas)
+  if (CH_AS_K_WORDS.test(w)) { for (const c of chunks) if (c.text === 'ch') c.sound = 'k'; }
+  // ou가 "오우"인 낱말 (soul)
+  if (OU_LONG_O_WORDS.test(w)) { for (const c of chunks) if (c.text === 'ou') c.sound = 'long-o'; }
+  // shall은 a가 "애" (ball의 "오-"와 다름)
+  if (/^shall/.test(w)) { const i = chunks.findIndex(c => c.text === 'a'); if (i >= 0) chunks[i].sound = 'short-a'; }
+  // u가 "우-"인 낱말 (truth, ruler)
+  if (/^(truth|ruler|rude|rule|July|super|tuna|student|stupid|duty|human)\w*$/i.test(w)) {
+    for (const c of chunks) if (c.text === 'u' && c.sound === 'short-u') c.sound = 'oo-long';
+  }
   // ie — field는 "이-", pie는 "아이"
   if (IE_LONG_E_WORDS.test(w)) {
     for (const c of chunks) if (c.text === 'ie') c.sound = 'long-e';
@@ -465,7 +596,7 @@ function applyBlendExceptions(w, chunks) {
   if (/^war/.test(w)) { for (const c of chunks) if (c.text === 'ar') c.sound = 'or'; }
   if (/^wor/.test(w)) { for (const c of chunks) if (c.text === 'or') c.sound = 'er'; }
   // also, almost, always — l 앞의 a는 "오-"
-  if (/^al(so|most|ways|right)/.test(w)) {
+  if (/^al(so|most|ways|right|ready|though)/.test(w)) {
     const i = chunks.findIndex(c => c.text === 'a');
     if (i >= 0) chunks[i].sound = 'aw';
   }

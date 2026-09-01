@@ -79,7 +79,7 @@ export const SOUND_INFO = {
   'sh': { label: 'sh', ko: '쉬', tip: '조용히 할 때처럼 "쉿"', words: ['ship', 'shop', 'fish', 'shell'] },
   'ch': { label: 'ch', ko: '치', tip: '기차 소리처럼 "치치"', words: ['chin', 'chip', 'lunch', 'chair'] },
   'th': { label: 'th', ko: '쓰', tip: '혀를 살짝 물고 바람만 내요', words: ['thin', 'think', 'bath', 'math'] },
-  'th-voiced': { label: 'th', ko: '드', tip: '혀를 물고 목을 울려요', words: ['the', 'this', 'that', 'they'] },
+  'th-voiced': { label: 'th', ko: '드', tip: '혀를 물고 목을 울려요', words: ['this', 'that', 'they', 'them'] },
   'ng': { label: 'ng', ko: '응', tip: '코로 "응~"', words: ['ring', 'sing', 'king', 'long'] },
   'qu': { label: 'qu', ko: '쿠', tip: 'q는 늘 u와 함께 다녀요', words: ['queen', 'quick', 'quiz', 'quilt'] },
   'wh': { label: 'wh', ko: '후', tip: '촛불을 끄듯 "후"', words: ['what', 'when', 'white', 'wheel'] },
@@ -89,7 +89,7 @@ export const SOUND_INFO = {
   'long-i': { label: 'i_e', ko: '아이', tip: '끝의 e가 i를 이름으로 만들어요', words: ['kite', 'bike', 'five', 'time'] },
   'long-o': { label: 'o_e', ko: '오우', tip: '끝의 e가 o를 이름으로 만들어요', words: ['home', 'nose', 'rope', 'bone'] },
   'long-u': { label: 'u_e', ko: '우-', tip: '입술을 모아 길게 "우-"', words: ['flute', 'rule', 'blue', 'glue'] },
-  'yoo': { label: 'u_e', ko: '유-', tip: 'u를 이름 그대로 "유"', words: ['cute', 'use', 'cube', 'music'] },
+  'yoo': { label: 'u_e', ko: '유-', tip: 'u를 이름 그대로 "유"', words: ['cute', 'cube', 'music', 'human'] },
 
   // ── 모음 팀 ──
   'long-e': { label: 'ee / ea', ko: '이-', tip: '입을 옆으로 길게 "이-"', words: ['see', 'tree', 'team', 'read'] },
