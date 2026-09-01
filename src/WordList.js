@@ -18,29 +18,9 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
   const weakWords = list.filter(w => isWeakStat(wordStats[(w || '').toLowerCase().trim()]));
   const [imgs, setImgs] = useState({});         // { word: url | '' }
 
-  // 소리 조각 재생: [소리] → 이 단어 → 같은 소리 친구들
   const phBusyRef = useRef(false);
   const phAbortRef = useRef(false);
-  const playSoundPiece = async (p, word, friends, idx) => {
-    if (phBusyRef.current || playing) return;   // 다른 재생 중이면 무시
-    phBusyRef.current = true; phAbortRef.current = false;
-    setPlaying(idx + '-phonics');               // 다른 버튼도 함께 잠금
-    try {
-      const played = await playPhonicsSound(soundFile(p.sound)); // 음원이 없으면 건너뜀
-      if (played && !phAbortRef.current) await new Promise(r => setTimeout(r, 250));
-      if (speak && !phAbortRef.current) {
-        await speak(word);
-        for (const f of friends.slice(0, 2)) {
-          if (phAbortRef.current) break;
-          await new Promise(r => setTimeout(r, 350));
-          if (phAbortRef.current) break;
-          await speak(f);
-        }
-      }
-    } catch (e) { /* ignore */ }
-    phBusyRef.current = false;
-    setPlaying(null);
-  };
+  const [noSound, setNoSound] = useState('');   // 음원이 아직 없을 때 안내
   const stopSoundPiece = () => {
     phAbortRef.current = true;
     stopPhonicsSound();
@@ -60,6 +40,40 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
   const [repeatCount, setRepeatCount] = useState(3);
   const [gap, setGap] = useState(1); // 초
   const [speedRate, setSpeedRate] = useState(0.7); // TTS 속도
+
+  // 파닉스 소리만 재생 (위의 반복·간격 설정을 따름)
+  const playPhonicsOnly = async (p, idx) => {
+    if (phBusyRef.current || playing) return;
+    phBusyRef.current = true; phAbortRef.current = false;
+    setNoSound('');
+    setPlaying(idx + '-phsound');
+    try {
+      for (let r = 0; r < repeatCount; r++) {
+        if (phAbortRef.current) break;
+        const ok = await playPhonicsSound(soundFile(p.sound));
+        if (!ok) { setNoSound(p.label); break; }   // 음원이 아직 등록되지 않음
+        if (r < repeatCount - 1) await new Promise(res => setTimeout(res, gap * 1000));
+      }
+    } catch (e) { /* ignore */ }
+    phBusyRef.current = false;
+    setPlaying(null);
+  };
+
+  // 같은 소리가 나는 단어들만 이어서 읽어 주기
+  const playFriends = async (friends, idx) => {
+    if (phBusyRef.current || playing || !speak) return;
+    phBusyRef.current = true; phAbortRef.current = false;
+    setPlaying(idx + '-phfriends');
+    try {
+      for (let fi = 0; fi < friends.length; fi++) {
+        if (phAbortRef.current) break;
+        await speak(friends[fi]);
+        if (fi < friends.length - 1) await new Promise(res => setTimeout(res, 400));
+      }
+    } catch (e) { /* ignore */ }
+    phBusyRef.current = false;
+    setPlaying(null);
+  };
 
   const play = async (w, i, mode) => {
     if (playing) return;
@@ -195,15 +209,27 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
                               ))}
                             </div>
                             <div className="wlist-ph-row">
-                              {playing === i + '-phonics' ? (
+                              {playing === i + '-phsound' ? (
                                 <button className="wlist-ph-btn" onClick={stopSoundPiece}>⏹️ 멈춤</button>
                               ) : (
-                                <button className="wlist-ph-btn" onClick={() => playSoundPiece(p, w, friends, i)} disabled={!!playing}>
-                                  🔈 <b>{p.label}</b> 소리
+                                <button className="wlist-ph-btn" onClick={() => playPhonicsOnly(p, i)} disabled={!!playing}>
+                                  🔈 <b>{p.label}</b> 소리 듣기
                                 </button>
+                              )}
+                              {friends.length > 0 && (
+                                playing === i + '-phfriends' ? (
+                                  <button className="wlist-ph-btn friends" onClick={stopSoundPiece}>⏹️ 멈춤</button>
+                                ) : (
+                                  <button className="wlist-ph-btn friends" onClick={() => playFriends(friends, i)} disabled={!!playing}>
+                                    👬 같은 소리 듣기
+                                  </button>
+                                )
                               )}
                               <span className="wlist-ph-desc">{p.desc}</span>
                             </div>
+                            {noSound === p.label && (
+                              <div className="wlist-ph-nosound">아직 <b>{p.label}</b> 음원이 등록되지 않았어요.</div>
+                            )}
                             {friends.length > 0 && (
                               <div className="wlist-ph-friends">
                                 같은 소리: {friends.join(', ')}

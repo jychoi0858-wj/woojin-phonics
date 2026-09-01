@@ -548,6 +548,16 @@
 }
 .wlist-ph-btn b { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.1rem; }
 .wlist-ph-btn:hover { background: #ffefd4; }
+.wlist-ph-btn:disabled { opacity: 0.45; cursor: default; }
+.wlist-ph-btn.friends {
+  border-color: #a7dcc0; background: #eefaf3; color: #2b6a45;   /* 같은 소리 = 초록 계열 */
+}
+.wlist-ph-btn.friends:hover { background: #e0f5ea; }
+.wlist-ph-nosound {
+  margin-top: 8px;
+  font-family: var(--font-kr, sans-serif); font-size: 0.9rem; color: #b06a2c;
+}
+.wlist-ph-nosound b { font-family: 'Andika', 'Nunito', sans-serif; }
 .wlist-ph-desc { font-family: var(--font-kr, sans-serif); font-size: 0.9rem; color: #6b7285; }
 .wlist-ph-friends {
   margin-top: 8px;
