@@ -1,0 +1,41 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 파닉스 음원 (저작권 자료 — Firestore에만 올리고 저장소에는 포함하지 않음)
+/phonics-mp3
+/phonics-cut
+/phonics-download.ps1
+/phonics-download.bat
+/phonics-download.html
+/phonics-check.html
+/arasaac-preview.html
+
+# 작업용 임시 파일
+_tail_*.txt
+_css_tail.txt
+/build2
+
+# 앱에서 쓰지 않는 음원 (디스크에는 남겨 두고 저장소에만 제외)
+/public/audio1
+/public/sounds/leather-original-backup.mp3

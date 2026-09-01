@@ -1,0 +1,85 @@
+/* 레슨 노래 모달 */
+.song-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  font-family: var(--font-kr, sans-serif);
+}
+.song-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.song-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: #eef1f8; font-size: 16px; cursor: pointer; }
+
+.song-player {
+  position: relative; width: 100%; padding-top: 56.25%;
+  border-radius: 14px; overflow: hidden; background: #000; margin-bottom: 14px;
+}
+.song-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+.song-player-host { position: absolute; inset: 0; }
+.song-player-host iframe { width: 100%; height: 100%; }
+
+.song-cc-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: -6px 0 12px; }
+.song-cc-label { font-size: 0.82rem; color: #666; font-weight: 700; }
+.song-cc-btn {
+  border: 2px solid #d8dbe4; background: #fff; color: #555;
+  font-family: var(--font-kr, sans-serif); font-size: 0.82rem; font-weight: 700;
+  padding: 4px 11px; border-radius: 999px; cursor: pointer;
+}
+.song-cc-btn.active { background: #ff6b6b; border-color: #ff6b6b; color: #fff; }
+.song-cc-ok { font-size: 0.8rem; color: #2e9e5b; font-weight: 700; }
+.song-cc-warn { font-size: 0.8rem; color: #e67e22; font-weight: 700; }
+
+.song-section-title { font-size: 0.95rem; font-weight: 700; color: #444; margin: 6px 0; }
+.song-empty { color: #888; font-size: 0.9rem; padding: 10px 0; }
+
+.song-saved-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.song-saved-item {
+  display: flex; align-items: center; gap: 8px;
+  background: #f6f8fc; border-radius: 12px; padding: 8px 12px; border: 2px solid transparent;
+}
+.song-saved-item.active { border-color: #ff6b6b; background: #fff2f2; }
+.song-play-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: none; background: #ff6b6b; color: #fff; cursor: pointer; font-size: 0.8rem; }
+.song-saved-title { flex: 1; cursor: pointer; font-size: 0.95rem; color: #2b3a55; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.song-remove-btn { flex-shrink: 0; border: none; background: #fdeaea; color: #d14848; border-radius: 8px; width: 26px; height: 26px; cursor: pointer; }
+
+.song-search-toggle {
+  width: 100%; text-align: left; border: none; background: #eef1f8; color: #555;
+  font-family: var(--font-kr); font-size: 0.9rem; font-weight: 700; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+}
+.song-search-panel { margin-top: 8px; }
+.song-scope-select {
+  width: 100%; margin-bottom: 8px; padding: 9px 10px;
+  border: 2px solid #d8dbe4; border-radius: 10px; font-size: 0.9rem;
+  font-family: var(--font-kr, sans-serif); background: #fff;
+}
+.song-search-row { display: flex; gap: 8px; }
+.song-search-input { flex: 1; padding: 10px; border: 2px solid #d8dbe4; border-radius: 10px; font-size: 0.95rem; }
+.song-search-btn { border: none; background: #ff6b6b; color: #fff; font-weight: 700; padding: 0 18px; border-radius: 10px; cursor: pointer; font-family: var(--font-kr); }
+.song-search-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.song-search-note { font-size: 0.78rem; color: #888; margin: 6px 0; }
+
+.song-suggest { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 6px; }
+.song-suggest-label { font-size: 0.8rem; color: #666; font-weight: 700; }
+.song-suggest-chip {
+  border: 2px solid #ffd2a6; background: #fff6ec; color: #c2691a;
+  font-family: var(--font-kr, sans-serif); font-size: 0.82rem; font-weight: 700;
+  padding: 4px 11px; border-radius: 999px; cursor: pointer;
+}
+.song-suggest-chip:hover { background: #ffedd8; }
+.song-suggest-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.song-error { color: #d14848; font-size: 0.88rem; margin: 6px 0; }
+
+.song-results { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.song-result { display: flex; align-items: center; gap: 10px; background: #f9fafc; border-radius: 12px; padding: 8px; }
+.song-result-thumb { position: relative; width: 120px; flex-shrink: 0; border-radius: 8px; overflow: hidden; cursor: pointer; background: #000; aspect-ratio: 16/9; }
+.song-result-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.song-thumb-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 1.6rem; }
+.song-result-play { position: absolute; bottom: 4px; left: 4px; font-size: 0.7rem; color: #fff; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 6px; }
+.song-result-dur { position: absolute; bottom: 4px; right: 4px; font-size: 0.72rem; color: #fff; background: rgba(0,0,0,0.75); padding: 2px 6px; border-radius: 6px; font-weight: 700; }
+.song-result-info { flex: 1; min-width: 0; }
+.song-result-title { font-size: 0.9rem; color: #2b3a55; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.song-result-channel { font-size: 0.78rem; color: #999; margin-top: 2px; }
+.song-add-btn { flex-shrink: 0; border: none; background: #27ae60; color: #fff; font-family: var(--font-kr); font-weight: 700; font-size: 0.82rem; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+.song-add-btn.saved { background: #cfd6e0; color: #667; cursor: default; }

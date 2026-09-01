@@ -1,0 +1,83 @@
+/* 아케이드 런: 단어 수집 게임 */
+.srg-wrap {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-kr, sans-serif);
+}
+
+.srg-board {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  padding: 10px; background: #fff; border-radius: 14px; margin-bottom: 6px;
+  font-family: 'Andika', 'Nunito', sans-serif;
+}
+.srg-word { font-size: 1.15rem; color: #2b3a55; font-weight: 700; }
+.srg-blank {
+  font-size: 1.15rem; font-weight: 800; color: #c0c6d4;
+  border-bottom: 3px solid #c0c6d4; min-width: 40px; text-align: center;
+}
+.srg-blank.filled { color: #2e9e5b; border-color: #2e9e5b; }
+.srg-hp { text-align: center; font-size: 1.1rem; margin-bottom: 8px; letter-spacing: 1px; }
+
+.srg-area {
+  position: relative;
+  width: 100%;
+  height: min(58vh, 460px);
+  background: linear-gradient(#eaf2ff, #dbe7fb);
+  border-radius: 16px;
+  overflow: hidden;
+  touch-action: none;
+  box-shadow: inset 0 0 0 2px #cdd9ef;
+}
+.srg-shake { animation: srg-shake 0.35s; }
+@keyframes srg-shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+
+.srg-lane-lines { position: absolute; inset: 0; pointer-events: none; }
+.srg-lane-lines span { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.7); }
+.srg-lane-lines span:nth-child(1) { left: 33.33%; }
+.srg-lane-lines span:nth-child(2) { left: 66.66%; }
+
+.srg-chip {
+  position: absolute; top: 0;
+  padding: 10px 14px; border-radius: 12px;
+  font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 800;
+  white-space: nowrap; will-change: transform;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+.srg-chip.ok { background: #4a90e2; color: #fff; }
+.srg-chip.no { background: #fff; color: #e06666; border: 2px solid #f3b6b6; }
+
+.srg-player {
+  position: absolute; bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 2.6rem;
+  transition: left 0.15s ease-out;
+  will-change: left;
+}
+
+.srg-overlay {
+  position: absolute; inset: 0; z-index: 5;
+  background: rgba(255,255,255,0.9);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  text-align: center; padding: 16px;
+}
+.srg-title { font-size: 1.5rem; font-weight: 800; color: #2b3a55; }
+.srg-desc { font-size: 0.95rem; color: #666; line-height: 1.5; }
+.srg-cleared-sentence { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.3rem; font-weight: 700; color: #2e9e5b; }
+.srg-btn {
+  border: none; border-radius: 12px; padding: 12px 24px; cursor: pointer;
+  font-family: var(--font-kr, sans-serif); font-size: 1.05rem; font-weight: 700;
+}
+.srg-btn.start { background: #ff8a3d; color: #fff; box-shadow: 0 3px 0 #d96f28; }
+.srg-btn.ghost { background: #eef1f8; color: #666; }
+.srg-btn-row { display: flex; gap: 10px; }
+
+.srg-controls { display: flex; gap: 12px; margin-top: 12px; justify-content: center; }
+.srg-ctrl {
+  flex: 1; max-width: 160px; padding: 16px; border: none; border-radius: 14px;
+  background: #5b8def; color: #fff; font-size: 1.6rem; cursor: pointer;
+  box-shadow: 0 4px 0 #3f6fd0;
+}
+.srg-ctrl:active { transform: translateY(2px); box-shadow: 0 2px 0 #3f6fd0; }

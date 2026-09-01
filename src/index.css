@@ -1,0 +1,125 @@
+/* ===== CSS Variables (초등 저학년 파스텔 팔레트) ===== */
+:root {
+  --bg-main: #FFF9E6;
+  --bg-card: #FFFFFF;
+  --bg-card-alt: #FFF3E0;
+  
+  --color-primary: #66BB6A;
+  --color-primary-dark: #4CAF50;
+  --color-primary-shadow: #388E3C;
+  
+  --color-accent: #FFA726;
+  --color-accent-dark: #F57C00;
+  
+  --color-day: #64B5F6;
+  --color-day-active: #1E88E5;
+  --color-day-hover: #42A5F5;
+  
+  --color-danger: #EF5350;
+  --color-danger-light: #EF9A9A;
+  
+  --color-highlight: #EF5350;
+  --color-text-word: #1A237E;
+  --color-text: #333333;
+  --color-text-light: #757575;
+  --color-disabled: #E0E0E0;
+  --color-disabled-text: #9E9E9E;
+
+  --color-pink: #F48FB1;
+  --color-purple: #CE93D8;
+  --color-cyan: #4DD0E1;
+  --color-lime: #AED581;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-round: 50px;
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+  --shadow-btn: 0 4px 0px;
+
+  --font-kr: 'Jua', sans-serif;
+  --font-en: 'Nunito', sans-serif;
+}
+
+/* ===== Global Reset & Defaults ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overscroll-behavior: none; /* 당겨서 새로고침(pull-to-refresh) 방지 */
+}
+
+body {
+  font-family: var(--font-kr);
+  background: var(--bg-main);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  overscroll-behavior: none; /* 당겨서 새로고침 방지 */
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-day);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-day-active);
+}
+
+/* ===== ErrorBoundary — 흰 화면 대신 복구 안내 ===== */
+.eb-wrap {
+  position: fixed; inset: 0; z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-main, #FFF9E6); padding: 20px;
+  font-family: 'Nanum Gothic', 'Malgun Gothic', sans-serif;
+}
+.eb-card {
+  background: #fff; border-radius: 24px; padding: 32px 26px;
+  max-width: 480px; width: 100%; text-align: center;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+}
+.eb-emoji { font-size: 62px; line-height: 1; margin-bottom: 12px; }
+.eb-title { font-size: 1.5rem; font-weight: 800; color: #2b3a55; margin-bottom: 10px; }
+.eb-desc { font-size: 1rem; color: #6b7285; line-height: 1.7; margin-bottom: 22px; }
+.eb-btns { display: flex; flex-direction: column; gap: 10px; }
+.eb-btn {
+  border: none; border-radius: 14px; padding: 15px 22px;
+  font-family: inherit; font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  min-height: 52px;
+}
+.eb-btn.primary { background: #27ae60; color: #fff; box-shadow: 0 3px 0 #1e8c4d; }
+.eb-btn.ghost { background: #eef1f8; color: #6b7285; font-size: 0.92rem; min-height: 44px; }
+.eb-detail {
+  margin-top: 16px; padding: 12px; text-align: left;
+  background: #f6f7fb; border-radius: 10px;
+  font-size: 0.72rem; color: #55607a; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-all;
+  max-height: 260px; overflow: auto;
+}

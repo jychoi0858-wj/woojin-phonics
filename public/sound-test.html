@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>효과음 테스트 — 별 & 똥</title>
+<style>
+  body { font-family: sans-serif; background: #fff9e6; margin: 0; padding: 20px; }
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1.05rem; margin: 22px 0 10px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  button {
+    font-size: 1rem; font-weight: 700; padding: 14px 18px;
+    border: none; border-radius: 12px; cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  }
+  .star button, button.star { background: #ffe9a8; }
+  .poop button, button.poop { background: #e8d3b8; }
+  .slice button, button.slice { background: #cfe3ff; }
+  button:active { transform: translateY(2px); box-shadow: none; }
+  p { color: #666; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>🔊 효과음 테스트</h1>
+<p>버튼을 눌러 들어보고, 마음에 드는 번호를 알려주세요. (예: "별 4번, 똥 7번")</p>
+
+<h2>🌟 황금별 (반짝)</h2>
+<div class="grid star" id="stars"></div>
+
+<h2>💩 똥 (뿌직) — 노이즈 없이 부드럽게</h2>
+<div class="grid poop" id="poops"></div>
+
+<h2>🔪 베기 (휙~ 칼소리)</h2>
+<div class="grid slice" id="slices"></div>
+
+<h2>💩 리얼 똥 5종 (불규칙 떨림 방식)</h2>
+<div class="grid poop" id="rpoops"></div>
+
+<h2>🔪 리얼 휙 5종 (휘두르는 바람 방식)</h2>
+<div class="grid slice" id="rslices"></div>
+
+<script>
+let C = null;
+function ctx() {
+  if (!C) C = new (window.AudioContext || window.webkitAudioContext)();
+  if (C.state === 'suspended') C.resume();
+  return C;
+}
+function tone(freq, dur, type, vol, delayMs, freqEnd) {
+  const c = ctx();
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type || 'sine';
+  const t = c.currentTime + (delayMs || 0) / 1000;
+  o.frequency.setValueAtTime(freq, t);
+  if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, t + dur);
+  g.gain.setValueAtTime(vol || 0.25, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur, vol, delayMs, filterType, f0, f1, q) {
+  const c = ctx();
+  const t = c.currentTime + (delayMs || 0) / 1000;
+  const buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const src = c.createBufferSource(); src.buffer = buf;
+  const fl = c.createBiquadFilter(); fl.type = filterType || 'bandpass'; fl.Q.value = q || 1;
+  fl.frequency.setValueAtTime(f0 || 1000, t);
+  if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = c.createGain();
+  g.gain.setValueAtTime(vol || 0.3, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(fl); fl.connect(g); g.connect(c.destination);
+  src.start(t);
+}
+// 부드러운 방귀 톤: triangle + 로우패스 + 떨림 (노이즈 없음 → 스피커 안 찢어짐)
+function fart(freq, dur, vol, delayMs, wobbleHz, slideTo, lp, type) {
+  const c = ctx();
+  const t = c.currentTime + (delayMs || 0) / 1000;
+  const o = c.createOscillator(); o.type = type || 'triangle';
+  o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+  const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp || 420; fl.Q.value = 0.7;
+  const g = c.createGain(); g.gain.setValueAtTime(vol || 0.3, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  let lfo, lg;
+  if (wobbleHz) {
+    lfo = c.createOscillator(); lfo.frequency.value = wobbleHz;
+    lg = c.createGain(); lg.gain.value = (vol || 0.3) * 0.6;
+    lfo.connect(lg); lg.connect(g.gain);
+  }
+  o.connect(fl); fl.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t + dur + 0.05);
+  if (lfo) { lfo.start(t); lfo.stop(t + dur + 0.05); }
+}
+
+/* 리얼 방귀: 불규칙한 짧은 펄스들의 연속 (입술 떨림처럼) */
+function realFart(dur, f0, vol, lp, drop) {
+  const c = ctx(); const t0 = c.currentTime;
+  let t = 0;
+  while (t < dur) {
+    const plen = 0.012 + Math.random() * 0.022;                 // 펄스 길이 불규칙
+    const gap = 0.006 + Math.random() * 0.02;                   // 간격 불규칙
+    const f = Math.max(45, f0 + (Math.random() - 0.5) * 30 - (t / dur) * (drop || 25));
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp || 480;
+    const g = c.createGain();
+    const amp = (vol || 0.45) * (0.55 + Math.random() * 0.5) * (1 - 0.45 * t / dur);
+    g.gain.setValueAtTime(0.0001, t0 + t);
+    g.gain.exponentialRampToValueAtTime(amp, t0 + t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + t + plen);
+    o.connect(fl); fl.connect(g); g.connect(c.destination);
+    o.start(t0 + t); o.stop(t0 + t + plen + 0.02);
+    t += plen + gap;
+  }
+}
+
+/* 리얼 휙: 휘두르는 속도 곡선(커졌다 작아지는)의 부드러운 바람 */
+function realWhoosh(dur, fLow, fPeak, vol, delayMs) {
+  const c = ctx();
+  const t = c.currentTime + (delayMs || 0) / 1000;
+  const buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf;
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; // 쇳소리 제거
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
+  bp.frequency.setValueAtTime(fLow, t);
+  bp.frequency.exponentialRampToValueAtTime(fPeak, t + dur * 0.45);   // 스윙 가속
+  bp.frequency.exponentialRampToValueAtTime(fLow * 0.8, t + dur);     // 감속
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.35, t + dur * 0.4);    // 커졌다가
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);               // 사라짐
+  src.connect(lp); lp.connect(bp); bp.connect(g); g.connect(c.destination);
+  src.start(t);
+}
+
+/* ───────── 🌟 별 10종 ───────── */
+const stars = [
+  ['별 1 (현재)', () => { [1200,1600,2100,2800].forEach((f,i)=>tone(f,0.09,'sine',0.22,i*70)); }],
+  ['별 2 글리산도', () => { tone(900,0.5,'sine',0.2,0,3400); noise(0.5,0.06,0,'highpass',5000); }],
+  ['별 3 벨 3연타', () => { [0,110,220].forEach(d=>{ tone(2093,0.25,'sine',0.2,d); tone(4186,0.18,'sine',0.08,d); }); }],
+  ['별 4 윈드차임', () => { [2637,3136,2093,3520,2794].forEach((f,i)=>tone(f,0.35,'sine',0.13,i*90)); }],
+  ['별 5 마법봉', () => { noise(0.45,0.12,0,'highpass',3000); tone(2637,0.3,'sine',0.22,180); tone(5274,0.2,'sine',0.08,180); }],
+  ['별 6 오르골', () => { [1046,1318,1568,2093].forEach((f,i)=>{ tone(f,0.4,'sine',0.18,i*120); tone(f*2,0.25,'sine',0.05,i*120); }); }],
+  ['별 7 트라이앵글', () => { tone(3135,0.8,'sine',0.16); tone(6270,0.5,'sine',0.05); tone(3160,0.8,'sine',0.1,15); }],
+  ['별 8 반짝 캐스케이드', () => { [3200,2800,2400,2000,1700,1400].forEach((f,i)=>tone(f,0.08,'sine',0.16,i*55)); }],
+  ['별 9 크리스탈 화음', () => { tone(2093,0.5,'sine',0.16); tone(2637,0.5,'sine',0.14,40); tone(3136,0.55,'sine',0.12,80); }],
+  ['별 10 하프 상승', () => { [1046,1318,1760,2093,2637].forEach((f,i)=>tone(f,0.3,'triangle',0.15,i*60)); tone(2637,0.4,'sine',0.08,420); }],
+];
+
+/* ───────── 💩 똥 10종 (노이즈 없음, 부드러운 뿌~직) ───────── */
+const poops = [
+  ['똥 1 뿌직', () => { fart(135,0.22,0.4,0,26,70,480); }],
+  ['똥 2 짧은 뽁', () => { tone(240,0.1,'sine',0.35,0,90); fart(95,0.12,0.3,80,0,70,400); }],
+  ['똥 3 뿌우~직', () => { fart(150,0.38,0.36,0,20,58,450); }],
+  ['똥 4 뿌.뿌직', () => { fart(130,0.09,0.36,0,30,95,480); fart(105,0.2,0.34,140,24,60,450); }],
+  ['똥 5 보글보글', () => { fart(190,0.09,0.32,0,0,150,500,'sine'); fart(160,0.1,0.32,110,0,120,500,'sine'); fart(130,0.14,0.32,230,0,85,480,'sine'); }],
+  ['똥 6 낮은 부웅', () => { fart(95,0.35,0.34,0,13,75,380,'sine'); }],
+  ['똥 7 먹먹한 뿡', () => { fart(120,0.22,0.3,0,0,68,300,'square'); }],
+  ['똥 8 삐지직', () => { fart(280,0.13,0.32,0,32,90,520); fart(75,0.16,0.3,120,20,55,400); }],
+  ['똥 9 통통통 방귀', () => { fart(150,0.1,0.34,0,0,100,450,'sine'); fart(125,0.11,0.32,120,0,82,450,'sine'); fart(100,0.14,0.3,250,0,60,420,'sine'); }],
+  ['똥 10 젤리 뿌직', () => { fart(115,0.26,0.38,0,38,72,470); }],
+];
+
+/* ───────── 🔪 베기(휙) 10종 ───────── */
+const slices = [
+  ['휙 1 (현재)', () => { noise(0.2,0.28,0,'bandpass',3800,600,1.1); }],
+  ['휙 2 짧은 에어', () => { noise(0.11,0.2,0,'highpass',1500); }],
+  ['휙 3 올려베기', () => { noise(0.15,0.22,0,'bandpass',800,3000,1.4); }],
+  ['휙 4 쌍휙', () => { noise(0.09,0.2,0,'bandpass',3000,900,1.4); noise(0.1,0.18,90,'bandpass',2600,700,1.4); }],
+  ['휙 5 칼바람 휘슬', () => { noise(0.22,0.2,0,'bandpass',1700,480,5); }],
+  ['휙 6 톤 채찍', () => { tone(1500,0.13,'sine',0.22,0,280); }],
+  ['휙 7 휘리릭', () => { tone(700,0.1,'sine',0.16,0,1900); noise(0.1,0.1,60,'highpass',2500); }],
+  ['휙 8 부드러운 슉', () => { noise(0.2,0.22,0,'lowpass',2200,380,0.8); }],
+  ['휙 9 검기+챙', () => { noise(0.14,0.2,0,'bandpass',3200,700,1.3); tone(2500,0.07,'sine',0.1,110); }],
+  ['휙 10 더블레이어', () => { tone(1200,0.14,'sine',0.14,0,260); noise(0.16,0.16,0,'bandpass',2800,650,1.5); }],
+];
+
+function fill(id, list, cls) {
+  const el = document.getElementById(id);
+  list.forEach(([name, fn]) => {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.className = cls;
+    b.onclick = fn;
+    el.appendChild(b);
+  });
+}
+/* ───────── 💩 리얼 똥 5종 ───────── */
+const rpoops = [
+  ['리얼똥 R1 짧뿌직', () => realFart(0.22, 100, 0.5, 500, 30)],
+  ['리얼똥 R2 부르르륵', () => realFart(0.5, 85, 0.45, 460, 30)],
+  ['리얼똥 R3 삐질', () => realFart(0.16, 140, 0.5, 560, 70)],
+  ['리얼똥 R4 낮고 축축', () => realFart(0.35, 70, 0.5, 380, 15)],
+  ['리얼똥 R5 두 방', () => { realFart(0.12, 110, 0.5, 500, 20); setTimeout(() => realFart(0.3, 88, 0.45, 460, 30), 200); }],
+];
+
+/* ───────── 🔪 리얼 휙 5종 ───────── */
+const rslices = [
+  ['리얼휙 R1 기본', () => realWhoosh(0.22, 500, 1900, 0.4)],
+  ['리얼휙 R2 빠른 휙', () => realWhoosh(0.14, 700, 2300, 0.38)],
+  ['리얼휙 R3 무거운 우웅', () => realWhoosh(0.32, 260, 1000, 0.45)],
+  ['리얼휙 R4 가벼운 휘릭', () => realWhoosh(0.12, 900, 2600, 0.3)],
+  ['리얼휙 R5 더블 스윙', () => { realWhoosh(0.16, 600, 2100, 0.36); realWhoosh(0.18, 500, 1800, 0.32, 140); }],
+];
+
+fill('stars', stars, 'star');
+fill('poops', poops, 'poop');
+fill('slices', slices, 'slice');
+fill('rpoops', rpoops, 'poop');
+fill('rslices', rslices, 'slice');
+</script>
+</body>
+</html>

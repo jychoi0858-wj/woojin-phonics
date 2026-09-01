@@ -1,0 +1,253 @@
+/* 🥷 단어 베기 */
+.slc-root {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px;
+  font-family: var(--font-kr, sans-serif);
+}
+
+.slc-area {
+  position: relative;
+  width: 100%;
+  height: min(84vh, 660px);
+  background: linear-gradient(#eaf7e6, #d5eecd 55%, #c2e4b6);
+  border-radius: 18px;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  box-shadow: inset 0 0 0 2px #b7dcab;
+}
+.slc-flash { animation: slc-flashbg 0.35s; }
+@keyframes slc-flashbg { 0%,100%{filter:none;} 50%{filter: brightness(0.82) saturate(1.4) hue-rotate(-18deg);} }
+
+/* 대나무 배경 — 길고 가는 마디 줄기 (잎 없음), 바람에 흔들림 */
+.slc-bamboo { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.slc-stalk {
+  position: absolute; bottom: -12px; height: 112%;
+  border-radius: 10px;
+  background: repeating-linear-gradient(
+    to top,
+    #83bd6f 0px, #83bd6f 58px,   /* 마디 사이 */
+    #5f9c4e 58px, #5f9c4e 62px   /* 마디 */
+  );
+  box-shadow: inset -3px 0 5px rgba(0, 0, 0, 0.15), inset 3px 0 4px rgba(255, 255, 255, 0.35);
+  transform-origin: bottom center;
+  animation: slc-sway 5.2s ease-in-out infinite;
+}
+.s1 { left: 3%;  width: 13px; opacity: 0.45; animation-delay: 0s; }
+.s2 { left: 9%;  width: 9px;  opacity: 0.3;  animation-delay: -1.8s; height: 90%; }
+.s3 { left: 20%; width: 11px; opacity: 0.35; animation-delay: -3.1s; height: 102%; }
+.s4 { right: 18%; width: 10px; opacity: 0.32; animation-delay: -2.2s; height: 95%; }
+.s5 { right: 8%;  width: 13px; opacity: 0.45; animation-delay: -0.9s; }
+.s6 { right: 2.5%; width: 8px; opacity: 0.28; animation-delay: -4s; height: 85%; }
+@keyframes slc-sway { 0%,100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.8deg); } }
+
+.slc-close {
+  position: absolute; top: 10px; right: 10px; z-index: 20;
+  border: none; background: rgba(255,255,255,0.85); color: #555;
+  font-family: var(--font-kr, sans-serif); font-weight: 700; font-size: 0.9rem;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+}
+
+/* HUD */
+.slc-hud {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  z-index: 6; display: flex; flex-direction: row; align-items: center; gap: 8px; /* 스코어를 단어 앞(왼쪽)에 한 줄로 */
+  pointer-events: none;
+  max-width: 99%; width: max-content; gap: 6px;
+}
+.slc-combo-chip {
+  font-weight: 800; color: #e2640f; font-size: 0.95rem;
+  background: rgba(255,255,255,0.85); border-radius: 999px; padding: 6px 12px;
+  animation: slc-pop 0.3s ease;
+  white-space: nowrap; flex-shrink: 0; /* 칩 안에서 2줄로 꺾이지 않게 */
+}
+.slc-target-box {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.92); border-radius: 999px; padding: 8px 18px;
+  font-size: 1.1rem; font-weight: 800; color: #2b3a55;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+.slc-target { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.5rem; color: #1e7a45; }
+/* 터치 영역 44px 이상 확보 (게임 중 헛누름 방지) */
+.slc-listen {
+  pointer-events: auto;
+  border: 2px solid #b9d4f5; background: #e1f0ff; color: #1f6fd6;
+  width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.slc-listen:active { transform: scale(0.92); }
+.slc-stats { display: flex; gap: 12px; font-weight: 800; color: #2b3a55; background: rgba(255,255,255,0.75); border-radius: 999px; padding: 4px 14px; font-size: 0.95rem; white-space: nowrap; flex-shrink: 0; }
+.slc-combo { color: #e2640f; animation: slc-pop 0.3s ease; }
+
+/* 힌트 단어 — 재생버튼 박스 왼쪽 별도 영역, 큰 글씨 */
+.slc-hintbig.full { color: #2e9e5b; border-color: #9bdcb2; } /* 정답 공개 시 초록 */
+.slc-hintbig {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 2rem; font-weight: 800;
+  color: #b26a00; letter-spacing: 3px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid #ffd27a;
+  border-radius: 14px; padding: 6px 18px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  animation: slc-pop 0.3s ease;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .slc-hintbig { font-size: 1.4rem; padding: 4px 12px; letter-spacing: 2px; }
+}
+
+/* 문장 모드 보드 (빈칸 포함 문장) — 여백 최소화로 최대한 한 줄 유지 */
+.slc-board {
+  display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;
+  background: rgba(255,255,255,0.92); border-radius: 14px; padding: 7px 10px;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  flex: 1 1 auto; min-width: 0; /* HUD 남는 공간을 전부 사용 */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  pointer-events: none;
+}
+.slc-board .slc-listen { pointer-events: auto; width: 44px; height: 44px; flex-shrink: 0; }
+.slc-bword { font-size: 1.35rem; font-weight: 700; color: #2b3a55; } /* 문장새총과 동일 크기 */
+.slc-bblank {
+  font-size: 1.35rem; font-weight: 800; color: #c0c6d4;
+  min-width: 52px; padding: 0 4px; text-align: center;
+  border-bottom: 4px solid #c0c6d4; border-radius: 4px;
+  letter-spacing: 1px;
+}
+.slc-bblank.cur {
+  color: #e53935; border-color: #e53935; background: #fff2f2;
+  box-shadow: 0 0 0 3px #ffd3d3; animation: sg-pulse 1s ease-in-out infinite;
+}
+.slc-bblank.filled { color: #2e9e5b; border-color: #2e9e5b; }
+@keyframes sg-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+@keyframes slc-pop { 0%{transform:scale(0.6);} 60%{transform:scale(1.25);} 100%{transform:scale(1);} }
+
+/* 날아다니는 오브젝트 */
+.slc-obj {
+  position: absolute; left: 0; top: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  will-change: transform; pointer-events: none;
+}
+.slc-obj.word {
+  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800; font-size: 1.5rem; /* +20% */
+  background: #fff; color: #2b3a55; border: 3px solid #f5a623;
+  border-radius: 14px; padding: 9px 16px; white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+.slc-obj.fruit { font-size: 3.9rem; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.25)); } /* +50% */
+
+/* 절단 조각 */
+.slc-piece {
+  position: absolute; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  transition: transform 0.95s cubic-bezier(0.35, 0, 0.8, 0.4), opacity 0.95s;
+  will-change: transform, opacity;
+}
+.slc-piece.word {
+  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800; font-size: 1.5rem;
+  background: #fff; color: #2b3a55; border: 3px solid #f5a623; border-radius: 14px;
+  white-space: nowrap; overflow: hidden;
+}
+.slc-piece.fruit { font-size: 3.9rem; }
+
+/* 궤적 캔버스 (최상단, 터치는 통과) */
+.slc-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; }
+
+/* 하단 안내 문구 (느린 깜빡임) */
+.slc-guide {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  z-index: 6; pointer-events: none;
+  font-family: var(--font-kr, sans-serif); font-weight: 700; font-size: 1rem;
+  color: #3a6b3f; background: rgba(255,255,255,0.7);
+  padding: 8px 18px; border-radius: 999px; white-space: nowrap;
+  animation: slc-guide-blink 2.8s ease-in-out infinite;
+}
+@keyframes slc-guide-blink { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.3; } }
+
+/* 남은 생명 — 왼쪽 하단 가로 하트 (새총게임과 동일 스타일) */
+.slc-hearts {
+  position: absolute; left: 14px; bottom: 12px; z-index: 6;
+  display: flex; gap: 4px; align-items: center;
+  background: rgba(255,255,255,0.75); border-radius: 999px; padding: 6px 12px;
+}
+.slc-heart { font-size: 1.4rem; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25)); }
+.slc-hearts-empty { font-family: var(--font-kr, sans-serif); font-weight: 700; font-size: 0.9rem; color: #d14848; }
+
+/* 💩/🌟 속도 효과 표시 */
+.slc-effect {
+  font-weight: 800; font-size: 0.95rem;
+  border-radius: 999px; padding: 6px 12px;
+  animation: slc-pop 0.3s ease;
+  white-space: nowrap; flex-shrink: 0; /* 칩 안에서 2줄로 꺾이지 않게 */
+}
+.slc-effect.fast { background: #6b4a26; color: #ffe3b3; }
+.slc-effect.slow { background: #fff3c2; color: #a8780a; }
+
+/* 충전 듣기 중 화면 가운데 큰 단어 */
+.slc-bigword {
+  position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
+  z-index: 13; pointer-events: none;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: clamp(2.4rem, 9vw, 4.5rem); font-weight: 800;
+  color: #1e7a45; letter-spacing: 2px; white-space: nowrap;
+  background: rgba(255,255,255,0.94);
+  border: 4px solid #9bdcb2; border-radius: 20px;
+  padding: 14px 34px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  animation: slc-bigpop 0.35s ease; /* translate 포함 — 우하단에서 날아오는 현상 방지 */
+  max-width: 94%; overflow: hidden; text-overflow: ellipsis;
+}
+@keyframes slc-bigpop {
+  0%   { transform: translate(-50%, -50%) scale(0.6); }
+  60%  { transform: translate(-50%, -50%) scale(1.15); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 생명 충전 패널 */
+.slc-refill {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  z-index: 14; text-align: center;
+  background: rgba(255,255,255,0.96); border-radius: 16px; padding: 14px 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+.slc-refill-title { font-family: var(--font-kr, sans-serif); font-weight: 800; font-size: 1.05rem; color: #2b3a55; margin-bottom: 10px; }
+.slc-refill-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.slc-refill-busy { font-family: var(--font-kr, sans-serif); font-weight: 700; color: #1f6fd6; }
+
+/* 오버레이 */
+.slc-overlay {
+  position: absolute; inset: 0; z-index: 15;
+  background: rgba(255,255,255,0.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  text-align: center; padding: 16px;
+}
+.slc-title { font-size: 1.7rem; font-weight: 800; color: #2b3a55; }
+.slc-desc { font-size: 1rem; color: #666; line-height: 1.6; }
+.slc-btn { border: none; border-radius: 12px; padding: 13px 26px; cursor: pointer; font-family: var(--font-kr, sans-serif); font-size: 1.05rem; font-weight: 700; }
+.slc-btn.start { background: #27ae60; color: #fff; box-shadow: 0 3px 0 #1e8c4d; }
+.slc-btn.ghost { background: #eef1f8; color: #666; }
+.slc-btn-row { display: flex; gap: 10px; }
+
+/* 폰 대응 */
+@media (max-width: 600px) {
+  .slc-root { padding: 4px; }
+  .slc-area { height: min(80vh, 620px); }
+  .slc-target { font-size: 1.2rem; }
+  .slc-target-box { padding: 6px 12px; font-size: 0.95rem; }
+  .slc-obj.word { font-size: 1.22rem; padding: 7px 11px; border-width: 2px; }
+  .slc-obj.fruit { font-size: 3.1rem; }
+  .slc-piece.word { font-size: 1.22rem; border-width: 2px; }
+  .slc-piece.fruit { font-size: 3.1rem; }
+  .slc-stalk { border-radius: 6px; }
+  .s1, .s5 { width: 9px; }
+  .s2, .s6 { width: 6px; }
+  .s3, .s4 { width: 7px; }
+  .slc-hearts { left: 8px; bottom: 8px; padding: 4px 9px; }
+  .slc-heart { font-size: 1.1rem; }
+  .slc-bword { font-size: 1.05rem; }
+  .slc-bblank { font-size: 1.05rem; min-width: 42px; border-bottom-width: 3px; }
+  .slc-board { gap: 4px; padding: 6px 8px; }
+  .slc-board .slc-listen { width: 44px; height: 44px; font-size: 1rem; } /* 폰에서도 44px 유지 */
+}

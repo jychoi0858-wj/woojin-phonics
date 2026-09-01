@@ -1,0 +1,677 @@
+/* ===== 단어학습 활동 (힌트 퀴즈 / 따라쓰기) 공용 스타일 ===== */
+.wa-card {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  font-family: var(--font-kr, sans-serif);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* 힌트 컨트롤 — 우측 상단 (Hint 쓰기 + 힌트 얻기) */
+.wa-hint-ctrl {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.wa-hint-use, .wa-hint-earn {
+  position: relative;
+  border: 2px solid #ffd27a;
+  background: #fff8e8;
+  color: #b26a00;
+  font-family: var(--font-kr, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wa-hint-earn { border-color: #b9d4f5; background: #eef5ff; color: #1f6fd6; }
+.wa-hint-use:disabled { opacity: 0.4; cursor: not-allowed; }
+.wa-hint-use:active, .wa-hint-earn:active { transform: scale(0.94); }
+.wa-hint-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+.wa-top { margin-bottom: 14px; }
+.wa-pic {
+  width: clamp(150px, 30vmin, 240px);
+  height: clamp(150px, 30vmin, 240px);
+  object-fit: cover;
+  border-radius: 16px;
+  margin: 0 auto 8px;
+  display: block;
+  background: #eef1f8;
+}
+.wa-pic-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 56px;
+  color: #c3c8d4;
+}
+.wa-pic-none {
+  font-family: var(--font-kr, sans-serif);
+  font-size: 0.85rem; font-weight: 700; color: #9aa2b4;
+}
+.wa-meaning {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+/* ── 글자 칸(슬롯) ── */
+.wa-slots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.wa-slot {
+  width: 46px;
+  height: 56px;
+  border: none;
+  border-bottom: 4px solid #c7cddb;
+  background: #f6f8fc;
+  border-radius: 10px 10px 6px 6px;
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  color: #2b3a55;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+}
+.wa-slot.empty { color: transparent; }
+.wa-slot.filled { background: #dbe7ff; border-bottom-color: #5b8def; }
+.wa-slot.locked { background: #fff3cd; border-bottom-color: #f0b400; cursor: default; }
+.wa-slot.filled:active { transform: scale(0.94); }
+.wa-solved .wa-slot { background: #d8f5e3; border-bottom-color: #2e9e5b; }
+
+@keyframes wa-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.wa-shake { animation: wa-shake 0.45s; }
+
+/* ── 글자 타일 ── */
+.wa-tiles {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 6px 0 14px;
+}
+.wa-tile {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #5b8def;
+  background: #fff;
+  border-radius: 12px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  color: #2b5cc4;
+  text-transform: lowercase;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #b9cdf5;
+  transition: transform 0.1s;
+}
+.wa-tile:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #b9cdf5; }
+.wa-tile.used, .wa-tile:disabled {
+  opacity: 0.25;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* ── 버튼 ── */
+.wa-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.wa-btn {
+  font-family: var(--font-kr, sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.15s;
+}
+.wa-btn:active { transform: scale(0.96); }
+.wa-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.wa-hint { background: #fff0c2; color: #9a6b00; }
+.wa-reset { background: #eef1f8; color: #555; }
+.wa-listen { background: #e1f0ff; color: #1f6fd6; }
+
+/* ── 정답 화면 ── */
+.wa-success { margin-top: 6px; }
+.wa-success-word {
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  color: #2e9e5b;
+  text-transform: lowercase;
+}
+.wa-success-msg {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2e9e5b;
+  margin: 6px 0 12px;
+}
+
+/* ── 따라쓰기 캔버스 ── */
+.wa-trace-hint {
+  font-size: 0.95rem;
+  color: #777;
+  margin-bottom: 10px;
+}
+.wa-trace-hinttop {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 10px;
+}
+.wa-trace-hinttop .wa-trace-hint { margin-bottom: 0; }
+.wa-trace-big {
+  border: 2px solid #5b8def; background: #eef3ff; color: #2b5cc4;
+  font-family: var(--font-kr, sans-serif); font-size: 0.85rem; font-weight: 700;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+}
+.wa-trace-big:active { transform: scale(0.95); }
+/* 따라쓰기 확대 팝업 (긴 단어용 — 가로 공간 넓게) */
+.trace-expand-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center; padding: 12px;
+}
+.trace-expand-modal {
+  position: relative; width: 98vw; max-width: 1200px;
+  max-height: 96vh; overflow-y: auto;
+  background: #fff; border-radius: 18px; padding: 42px 16px 16px;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: var(--font-kr, sans-serif);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.trace-expand-close {
+  position: absolute; top: 10px; right: 12px;
+  border: none; background: #eef1f8; border-radius: 999px;
+  padding: 6px 14px; cursor: pointer; font-family: var(--font-kr, sans-serif); font-weight: 700;
+}
+.trace-expand-modal .wa-canvas { width: 100%; max-width: 170vh; aspect-ratio: 640 / 260; }
+
+.wa-canvas {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  aspect-ratio: 640 / 260;
+  background: #fbfcff;
+  border: 2px dashed #c7cddb;
+  border-radius: 14px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: crosshair;
+  display: block;
+  margin: 0 auto 12px;
+}
+.wa-trace-score {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.wa-trace-score.pass { color: #2e9e5b; }
+.wa-trace-score.low { color: #e67e22; }
+
+/* ===== 발음 평가 (PronunceCheck) ===== */
+.wa-pronounce-word {
+  font-size: clamp(1.5rem, 4.5vmin, 2.1rem);
+  font-weight: 700;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  color: #2b3a55;
+  text-transform: lowercase;
+  margin-bottom: 14px;
+}
+.wa-difficulty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 10px;
+}
+.wa-diff-label { font-size: 0.9rem; color: #888; }
+.wa-diff-btn {
+  font-family: var(--font-kr, sans-serif);
+  font-size: 0.9rem;
+  padding: 5px 12px;
+  border: 2px solid #ffb74d;
+  background: #fff;
+  color: #b06b00;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.wa-diff-btn.active { background: #ffb74d; color: #fff; }
+.wa-pron-feedback { font-size: 1.2rem; font-weight: 700; margin: 6px 0; }
+.wa-pron-result { margin-top: 8px; }
+.wa-pron-score { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.wa-pron-total { font-size: 1.6rem; font-weight: 700; }
+.wa-pron-recognized { font-size: 0.95rem; color: #555; margin-top: 4px; }
+.wa-pron-basis { font-size: 0.75rem; color: #888; background: #eef0f5; padding: 2px 8px; border-radius: 999px; }
+.wa-pron-breakdown { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+.wa-bd {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.8rem; color: #555; background: #f1f3f8;
+  padding: 3px 9px; border-radius: 999px; font-family: 'Nunito', sans-serif;
+}
+.wa-bd b { font-size: 0.95rem; }
+.wa-pron-hint { font-size: 0.85rem; color: #e67e22; margin-top: 6px; text-align: center; }
+.wa-pron-phonemes { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+.wa-phoneme {
+  display: inline-flex; flex-direction: column; align-items: center;
+  padding: 4px 8px; border-radius: 8px; font-family: 'Andika', 'Nunito', sans-serif; font-size: 1rem; background: #f1f3f8;
+}
+.wa-phoneme-score { font-size: 0.7rem; opacity: 0.8; }
+.wa-score-good { color: #2e9e5b; }
+.wa-score-ok { color: #d18d12; }
+.wa-score-bad { color: #d14848; }
+
+/* ===== 세트 코스 (WordSetCourse) ===== */
+.wsc-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.wsc-modal {
+  position: relative;
+  width: 100%; max-width: 560px;
+  max-height: 94vh; overflow-y: auto;
+  background: #fff; border-radius: 20px;
+  padding: 20px 18px;
+  font-family: var(--font-kr, sans-serif);
+}
+.wsc-close {
+  position: absolute; top: 12px; right: 14px;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: #eef1f8; font-size: 16px; cursor: pointer; z-index: 2;
+}
+.wsc-empty { padding: 40px 10px; text-align: center; color: #777; }
+
+/* 인라인 임베드 (메인 학습 영역에 깔림) */
+.wsc-embed {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px 52px;
+  font-family: var(--font-kr, sans-serif);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.wsc-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.wsc-exit {
+  border: none; background: #eef1f8; color: #666;
+  font-family: var(--font-kr, sans-serif); font-size: 0.85rem;
+  padding: 5px 12px; border-radius: 999px; cursor: pointer;
+}
+
+.wsc-progress { margin-bottom: 14px; }
+.wsc-word-count { text-align: center; font-size: 0.95rem; color: #888; margin-bottom: 8px; }
+.wsc-stages { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+.wsc-stage {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 12px; border-radius: 999px;
+  background: #f1f3f8; color: #999; font-size: 0.9rem; font-weight: 700;
+}
+.wsc-stage.active { background: #5b8def; color: #fff; }
+.wsc-stage.done { background: #d8f5e3; color: #2e9e5b; }
+.wsc-stage-icon { font-size: 1rem; }
+.wsc-bar { height: 8px; background: #eef1f8; border-radius: 999px; overflow: hidden; }
+.wsc-bar-fill { height: 100%; background: #5b8def; transition: width 0.3s ease; }
+
+.wsc-stage-body { min-height: 200px; }
+/* 게임 건너뛰기 (눈에 덜 띄게 — 기본은 게임 하기) */
+.wsc-skip-game {
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: #9aa2b4;
+  font-family: var(--font-kr, sans-serif);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px 12px;
+  min-height: 40px;
+}
+.wsc-skip-game:hover { color: #6b7285; }
+
+/* 이어서 하기 안내 */
+.wsc-resume-note {
+  font-family: var(--font-kr, sans-serif);
+  font-size: 1rem;
+  color: #2b6a45;
+  background: #eaf6ef;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin: 6px 0 12px;
+}
+.wsc-resume-note b { font-size: 1.1rem; }
+
+/* 세트학습 듣기 단계 한글 뜻 */
+.ssc-meaning {
+  font-family: var(--font-kr, sans-serif);
+  font-size: clamp(1rem, 3.4vw, 1.35rem);
+  font-weight: 700;
+  color: #2b6a45;
+  text-align: center;
+  line-height: 1.5;
+  margin: -6px 0 14px;
+  word-break: keep-all;
+  animation: ssc-ko-in 0.18s ease;
+}
+@keyframes ssc-ko-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.ssc-sentence {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  font-weight: 700;
+  color: #2b3a55;
+  text-align: center;
+  line-height: 1.4;
+  margin: 10px 0 16px;
+  word-break: keep-all;
+}
+
+/* 읽기(말하기) 단계 문장 폰트를 앞 단계와 동일하게 */
+.ssc-read .wa-pronounce-word {
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  line-height: 1.4;
+  text-transform: none;
+  word-break: keep-all;
+}
+.wsc-stage-hint { font-size: 0.95rem; color: #777; margin-top: 8px; }
+
+/* 세로 가운데 측면 이동 버튼 */
+.wsc-nav-side {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #5b8def;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  z-index: 6;
+}
+.wsc-prev { left: 6px; }
+.wsc-next { right: 6px; background: #27ae60; }
+.wsc-nav-side:disabled { opacity: 0.3; cursor: not-allowed; }
+.wsc-nav-side:active { transform: translateY(-50%) scale(0.92); }
+
+.wsc-finish { text-align: center; padding: 10px; }
+.wsc-finish-title { font-size: 1.6rem; font-weight: 700; color: #2e9e5b; margin: 8px 0 4px; }
+.wsc-finish-sub { font-size: 1.05rem; color: #555; margin-bottom: 16px; }
+
+/* ===== 단어 찾기 개별 도구 버튼 ===== */
+.fw-activity-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.fw-activity-btn {
+  font-family: var(--font-kr, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 12px 20px;
+  border: 2px solid #5b8def;
+  background: #fff;
+  color: #2b5cc4;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fw-activity-btn:hover { background: #eef3ff; }
+.fw-activity-btn:active { transform: scale(0.96); }
+
+/* ===== 단어 학습 리스트 (WordList) ===== */
+.wlist-embed {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  font-family: var(--font-kr, sans-serif);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.wlist-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.wlist-title { font-size: 1.2rem; font-weight: 700; color: #2b3a55; }
+.wlist-list { display: flex; flex-direction: column; gap: 10px; }
+.wlist-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #f6f8fc; border-radius: 14px; padding: 12px 14px;
+}
+.wlist-num {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: #5b8def; color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+}
+.wlist-word {
+  font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 700;
+  color: #2b3a55; text-transform: lowercase;
+}
+/* 단어 버튼 (누르면 뜻·그림 펼침) */
+.wlist-word-btn {
+  flex: 1; display: flex; align-items: center; gap: 8px; min-height: 44px;
+  background: none; border: none; padding: 0; cursor: pointer; text-align: left;
+}
+
+/* 펼침 영역 — 그림 + 한글 뜻 */
+.wlist-block { display: flex; flex-direction: column; }
+.wlist-detail {
+  display: flex; align-items: center; gap: 16px;
+  margin: 6px 0 2px; padding: 12px 16px;
+  background: #fff; border: 2px solid #e3e8f2; border-radius: 14px;
+  animation: wlist-open 0.2s ease;
+}
+@keyframes wlist-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.wlist-pic {
+  width: 110px; height: 110px; object-fit: contain; flex-shrink: 0;
+  background: #fff; border-radius: 12px;
+}
+.wlist-pic-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-size: 40px; color: #c3c8d4; background: #f5f7fb;
+}
+.wlist-pic-none { font-family: var(--font-kr, sans-serif); font-size: 0.72rem; font-weight: 700; color: #9aa2b4; text-align: center; }
+/* 펼침 영역 오른쪽 세로 배치 (뜻 + 소리 조각) */
+.wlist-detail-col { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* ── 소리 조각 (파닉스) ── */
+.wlist-phonics { border-top: 2px dashed #e3e8f2; padding-top: 10px; }
+.wlist-ph-word {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 1.5rem; font-weight: 800; color: #9aa2b4;
+  letter-spacing: 1px; margin-bottom: 8px;
+}
+.wlist-ph-word .ph-mark {
+  color: #e2640f; background: #fff3e0;   /* 소리 조각 강조 */
+  border-radius: 5px; padding: 0 2px;
+}
+.wlist-ph-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wlist-ph-btn {
+  border: 2px solid #ffd27a; background: #fff6e6; color: #a5771a;
+  border-radius: 999px; padding: 9px 16px; min-height: 44px;
+  font-family: var(--font-kr, sans-serif); font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.wlist-ph-btn b { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.1rem; }
+.wlist-ph-btn:hover { background: #ffefd4; }
+.wlist-ph-desc { font-family: var(--font-kr, sans-serif); font-size: 0.9rem; color: #6b7285; }
+.wlist-ph-friends {
+  margin-top: 8px;
+  font-family: var(--font-kr, sans-serif); font-size: 0.92rem; font-weight: 700; color: #2b6a45;
+}
+
+.wlist-ko {
+  font-family: var(--font-kr, sans-serif); font-size: 1.6rem; font-weight: 800; color: #2b6a45;
+  word-break: keep-all;
+}
+.wlist-ko-none { font-size: 0.95rem; font-weight: 700; color: #a8adba; }
+@media (max-width: 600px) {
+  .wlist-pic { width: 84px; height: 84px; }
+  .wlist-ko { font-size: 1.25rem; }
+}
+.wlist-btns { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.wlist-btn {
+  font-family: var(--font-kr, sans-serif); font-size: 0.92rem; font-weight: 700;
+  padding: 9px 13px; border-radius: 18px; cursor: pointer; border: 2px solid transparent; white-space: nowrap;
+}
+.wlist-btn.listen { background: #e1f0ff; color: #1f6fd6; border-color: #b9d4f5; }
+.wlist-btn.phonics { background: #e6f7ec; color: #1e8c4d; border-color: #b6e3c6; }
+.wlist-btn.speak { background: #fff0e0; color: #c2691a; border-color: #ffd2a6; }
+.wlist-btn.stop { background: #fdeaea; color: #d14848; border-color: #f3b6b6; }
+.wlist-weak { font-size: 1rem; line-height: 1; }
+
+/* 어려워한 단어만 다시 하기 */
+.wlist-fix-weak {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 13px 18px;
+  border: 2px solid #f3c98b;
+  border-radius: 14px;
+  background: #fff6e6;
+  color: #a5771a;
+  font-family: var(--font-kr, sans-serif);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  min-height: 48px;
+}
+.wlist-fix-weak:hover { background: #ffefd4; }
+.wlist-btn.meaning { background: #fdf3dd; color: #a5771a; border-color: #f0dba6; }
+.wlist-btn.meaning.on { background: #eef1f8; color: #6b7285; border-color: #d5dae6; }
+.wlist-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 반복 / 간격 설정 */
+.wlist-settings {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  background: #f6f8fc; border-radius: 12px; padding: 8px 12px; margin-bottom: 12px;
+}
+.wlist-set-label { font-size: 0.9rem; color: #555; font-weight: 700; margin-right: 2px; }
+.wlist-set-btn {
+  min-width: 34px; padding: 5px 10px; border-radius: 999px;
+  border: 2px solid #c7cddb; background: #fff; color: #555;
+  font-family: var(--font-kr, sans-serif); font-size: 0.88rem; cursor: pointer;
+}
+.wlist-set-btn.active { background: #5b8def; color: #fff; border-color: #5b8def; }
+
+/* ===== 학습 진입 버튼 (세트/단어) ===== */
+.learn-entry-btns { display: flex; flex-direction: row; gap: 10px; width: 100%; }
+.learn-entry-btns .start-btn { flex: 1; min-width: 0; }
+
+/* 2x2 배열 */
+.learn-entry-btns.grid2 { flex-wrap: wrap; }
+.learn-entry-btns.grid2 .start-btn { flex: 1 1 calc(50% - 5px); }
+
+/* ===== 짝맞추기 게임 (MatchGame) ===== */
+.mg-wrap {
+  width: 100%; max-width: 760px; margin: 0 auto;
+  background: #fff; border-radius: 20px; padding: 18px;
+  font-family: var(--font-kr, sans-serif);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.mg-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 6px; }
+.mg-title { font-size: 1.2rem; font-weight: 700; color: #6a3fb0; }
+.mg-progress { font-size: 0.9rem; color: #888; }
+.mg-loading { padding: 40px 10px; text-align: center; color: #777; font-size: 1.05rem; }
+.wa-loading-spin { display: inline-block; animation: mg-spin 1.2s linear infinite; }
+@keyframes mg-spin { to { transform: rotate(360deg); } }
+
+.mg-grid { display: grid; gap: 10px; }
+.mg-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.mg-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.mg-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.mg-card {
+  position: relative; aspect-ratio: 1 / 1;
+  border: none; background: transparent; padding: 0; cursor: pointer;
+  perspective: 600px;
+}
+.mg-card:disabled { cursor: default; }
+.mg-card-inner {
+  position: absolute; inset: 0;
+  transform-style: preserve-3d; transition: transform 0.35s ease;
+}
+.mg-card.up .mg-card-inner { transform: rotateY(180deg); }
+.mg-face {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 16px; backface-visibility: hidden; overflow: hidden;
+}
+.mg-back {
+  background: linear-gradient(135deg, #a55eea, #7b4fd0);
+  color: #fff; font-size: 2rem;
+  box-shadow: 0 3px 0 #6a3fb0;
+}
+.mg-front {
+  background: #f6f4fc; border: 2px solid #d9cdf0;
+  transform: rotateY(180deg); padding: 6px;
+}
+.mg-card.matched .mg-front { border-color: #2e9e5b; background: #e7f8ee; }
+.mg-word {
+  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 700;
+  font-size: clamp(1rem, 4.5vw, 1.6rem); color: #2b3a55; text-transform: lowercase;
+  text-align: center; word-break: break-word;
+}
+.mg-img { width: 100%; height: 100%; object-fit: contain; }
+.mg-letter {
+  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800;
+  font-size: 2.4rem; color: #a55eea; text-transform: uppercase;
+}
+.mg-actions { display: flex; justify-content: center; margin-top: 14px; }
+
+.mg-win { text-align: center; padding: 24px 10px; }
+.mg-win-emoji { font-size: 3rem; }
+.mg-win-msg { font-size: 1.2rem; font-weight: 700; color: #2e9e5b; margin: 8px 0 16px; }

@@ -1,0 +1,255 @@
+/* 새총 단어 슈팅 (좌 새총 → 우 과녁) */
+.sg-root {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px;
+  font-family: var(--font-kr, sans-serif);
+  position: relative;
+}
+.sg-close {
+  position: absolute; top: 4px; right: 8px; z-index: 20;
+  border: none; background: #eef1f8; color: #555;
+  font-family: var(--font-kr, sans-serif); font-weight: 700; font-size: 0.9rem;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+}
+
+.sg-area {
+  position: relative;
+  width: 100%;
+  height: min(84vh, 680px);
+  background: linear-gradient(#cfe8ff, #eaf6ff 55%, #d8f0d8);
+  border-radius: 18px;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  box-shadow: inset 0 0 0 2px #bcd6ef;
+}
+.sg-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; }
+
+/* 배경 하늘: 구름(좌→우), 새(우→좌) */
+.sg-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.sg-cloud, .sg-bird { position: absolute; left: 0; will-change: transform; }
+.sg-cloud { opacity: 0.75; animation: sg-drift linear infinite; }
+.sg-c1 { top: 6%;  font-size: 3.2rem; animation-duration: 46s; animation-delay: -8s; }
+.sg-c2 { top: 26%; font-size: 2.2rem; animation-duration: 62s; animation-delay: -30s; opacity: 0.55; }
+.sg-c3 { top: 46%; font-size: 2.7rem; animation-duration: 54s; animation-delay: -45s; opacity: 0.65; }
+.sg-c4 { top: 70%; font-size: 1.9rem; animation-duration: 70s; animation-delay: -18s; opacity: 0.45; }
+@keyframes sg-drift {
+  from { transform: translateX(-140px); }
+  to   { transform: translateX(1400px); }
+}
+.sg-bird-flying { animation-name: sg-fly; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes sg-fly {
+  from { transform: translateX(1400px); }
+  to   { transform: translateX(-160px); }
+}
+/* 돌에 맞은 새: 뒤집혀 빙글 떨어짐 */
+.sg-bird-fall {
+  animation: sg-bird-drop 1.15s ease-in forwards;
+}
+@keyframes sg-bird-drop {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  30%  { transform: translateY(30px) rotate(160deg); }
+  100% { transform: translateY(460px) rotate(200deg); opacity: 0.85; }
+}
+
+/* 목표 문장 (중앙 상단) */
+.sg-board-row {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 3; max-width: 97%; width: max-content;
+  display: flex; align-items: center; gap: 10px;
+}
+.sg-board {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  background: rgba(255,255,255,0.9); border-radius: 14px; padding: 12px 16px;
+  font-family: 'Andika', 'Nunito', sans-serif;
+}
+.sg-round-num {
+  flex-shrink: 0;
+  background: #2b3a55; color: #fff;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem;
+  padding: 6px 12px; border-radius: 999px;
+}
+.sg-word { font-size: 1.35rem; font-weight: 700; color: #2b3a55; }
+.sg-blank {
+  font-size: 1.35rem; font-weight: 800; color: #c0c6d4;
+  min-width: 96px; padding: 0 8px; text-align: center;
+  border-bottom: 4px solid #c0c6d4; border-radius: 4px;
+}
+.sg-blank.target {
+  color: #e53935; border-color: #e53935; background: #fff2f2;
+  box-shadow: 0 0 0 3px #ffd3d3; animation: sg-pulse 1s ease-in-out infinite;
+}
+.sg-blank.filled { color: #2e9e5b; border-color: #2e9e5b; }
+@keyframes sg-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+/* 문장 듣기 — 단어학습의 듣기 버튼과 동일 스타일 */
+.sg-listen {
+  flex-shrink: 0;
+  font-family: var(--font-kr, sans-serif); font-size: 0.92rem; font-weight: 700;
+  padding: 11px 16px; border-radius: 18px; cursor: pointer; min-height: 44px;
+  background: #e1f0ff; color: #1f6fd6; border: 2px solid #b9d4f5;
+  white-space: nowrap;
+}
+.sg-listen:active { transform: scale(0.95); }
+
+/* 발사 돌덩이 (배경 없이 바위 이모지만) */
+.sg-ball {
+  position: absolute; z-index: 6;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.6rem; line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+  will-change: transform; pointer-events: none;
+}
+
+/* 오른쪽 보기 단어 과녁 */
+.sg-target {
+  position: absolute; z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  background: #fff; border: 3px solid #5b8def; color: #2b3a55;
+  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  text-align: center; padding: 2px; word-break: break-word; line-height: 1.05;
+  animation: sg-spawn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; /* 위에서 튀어나오는 등장 */
+}
+@keyframes sg-spawn {
+  from { transform: translateY(-30px) scale(0.3); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.sg-target.wrong { animation: sg-shake 0.4s; border-color: #e06666; background: #fdeaea; }
+@keyframes sg-shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-7px);} 75%{transform:translateX(7px);} }
+
+/* 정답 맞춤 — 초록 이펙트 */
+.sg-target.hit {
+  border-color: #2e9e5b; background: #d8f5e3; color: #1e7a45;
+  animation: sg-hit-pop 0.45s ease;
+  box-shadow: 0 0 0 6px rgba(46, 158, 91, 0.25);
+}
+@keyframes sg-hit-pop { 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
+
+/* 정답 단어가 문장 빈칸으로 날아가는 연출 */
+.sg-flyword {
+  position: absolute; z-index: 12;
+  transform: translate(-50%, -50%);
+  background: #2e9e5b; color: #fff;
+  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem;
+  padding: 8px 14px; border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(46, 158, 91, 0.45);
+  pointer-events: none;
+  transition: left 0.72s cubic-bezier(0.3, 0, 0.4, 1), top 0.72s cubic-bezier(0.3, 0, 0.4, 1), transform 0.72s;
+}
+
+.sg-overlay {
+  position: absolute; inset: 0; z-index: 15;
+  background: rgba(255,255,255,0.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  text-align: center; padding: 16px;
+}
+.sg-title { font-size: 1.6rem; font-weight: 800; color: #2b3a55; }
+.sg-desc { font-size: 1rem; color: #666; line-height: 1.5; }
+.sg-cleared { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.4rem; font-weight: 700; color: #2e9e5b; }
+.sg-btn { border: none; border-radius: 12px; padding: 13px 26px; cursor: pointer; font-family: var(--font-kr, sans-serif); font-size: 1.05rem; font-weight: 700; }
+.sg-btn.start { background: #ff8a3d; color: #fff; box-shadow: 0 3px 0 #d96f28; }
+.sg-btn.ghost { background: #eef1f8; color: #666; }
+.sg-btn-row { display: flex; gap: 10px; }
+
+.sg-hint { text-align: center; color: #777; font-size: 0.88rem; margin-top: 8px; }
+
+/* ─── 폰(좁은 화면) 대응 ─── */
+@media (max-width: 600px) {
+  .sg-root { padding: 4px; }
+  .sg-area { height: min(80vh, 620px); }
+  .sg-board-row { top: 44px; max-width: 96%; } /* 나가기 버튼 아래로 */
+  .sg-board { padding: 8px 10px; gap: 5px; }
+  .sg-word { font-size: 1.05rem; }
+  .sg-blank { font-size: 1.05rem; min-width: 60px; padding: 0 4px; border-bottom-width: 3px; }
+  .sg-round-num { font-size: 0.8rem; padding: 4px 9px; }
+  .sg-listen { font-size: 0.82rem; padding: 9px 12px; min-height: 42px; }
+  .sg-target { font-size: 0.9rem; border-width: 2px; border-radius: 10px; }
+  .sg-ball { font-size: 2.1rem; }
+  .sg-stones { padding: 4px 9px; left: 8px; bottom: 8px; }
+  .sg-stone { font-size: 1.1rem; }
+  .sg-close { top: 6px; right: 6px; font-size: 0.8rem; padding: 5px 10px; }
+  .sg-touch-hand { font-size: 1.5rem; }
+  .sg-refill { padding: 10px 12px; bottom: 10px; width: max-content; max-width: 94%; }
+  .sg-refill-btns .sg-btn { padding: 10px 14px; font-size: 0.92rem; }
+}
+
+/* 터치 유도: 돌 흔들기 + 퍼지는 링 + 손가락 */
+.sg-ball.nudge { animation: sg-wiggle 0.9s ease-in-out infinite; }
+@keyframes sg-wiggle {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  25% { transform: translate3d(-4px, 2px, 0) rotate(-10deg); }
+  75% { transform: translate3d(4px, -2px, 0) rotate(10deg); }
+}
+.sg-touch-ring {
+  position: absolute; z-index: 5;
+  width: 90px; height: 90px;
+  margin: -45px 0 0 -45px;
+  border: 4px solid rgba(91, 141, 239, 0.75);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sg-ring 1.4s ease-out infinite;
+}
+@keyframes sg-ring {
+  0% { transform: scale(0.55); opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.sg-touch-hand {
+  position: absolute; z-index: 6;
+  font-size: 1.9rem; pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+  animation: sg-hand 1.1s ease-in-out infinite;
+}
+@keyframes sg-hand {
+  0%, 100% { transform: translate(14px, -16px); } /* 오른쪽 위에서 */
+  50% { transform: translate(-8px, 12px); }        /* 왼쪽 아래로 (당기는 방향) */
+}
+
+/* 하단 안내 문구 (느린 깜빡임) */
+.sg-guide {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  z-index: 5; pointer-events: none;
+  font-family: var(--font-kr, sans-serif); font-weight: 700; font-size: 1rem;
+  color: #3f5a80; background: rgba(255,255,255,0.7);
+  padding: 8px 18px; border-radius: 999px; white-space: nowrap;
+  animation: sg-guide-blink 2.8s ease-in-out infinite;
+}
+.sg-guide-icon { vertical-align: -4px; margin-right: 2px; }
+@keyframes sg-guide-blink { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.3; } }
+
+/* 남은 돌 표시 (왼쪽 하단) */
+.sg-stones {
+  position: absolute; left: 14px; bottom: 12px; z-index: 5;
+  display: flex; gap: 4px; align-items: center;
+  background: rgba(255,255,255,0.75); border-radius: 999px; padding: 6px 12px;
+}
+.sg-stone { font-size: 1.4rem; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25)); }
+.sg-stone-empty { font-family: var(--font-kr, sans-serif); font-weight: 700; font-size: 0.9rem; color: #d14848; }
+
+/* 충전 듣기 중 화면 가운데 큰 글씨 */
+.sg-bigword {
+  position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
+  z-index: 13; pointer-events: none;
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: clamp(1.8rem, 6.5vw, 3.4rem); font-weight: 800;
+  color: #1e7a45; letter-spacing: 1px; text-align: center; line-height: 1.35;
+  background: rgba(255,255,255,0.94);
+  border: 4px solid #9bdcb2; border-radius: 20px;
+  padding: 14px 28px; max-width: 92%;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  animation: sg-pop 0.35s ease;
+}
+@keyframes sg-pop { 0%{transform:translate(-50%,-50%) scale(0.6);} 60%{transform:translate(-50%,-50%) scale(1.15);} 100%{transform:translate(-50%,-50%) scale(1);} }
+
+/* 돌 충전 패널 */
+.sg-refill {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  z-index: 14; text-align: center;
+  background: rgba(255,255,255,0.96); border-radius: 16px; padding: 14px 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+.sg-refill-title { font-family: var(--font-kr, sans-serif); font-weight: 800; font-size: 1.05rem; color: #2b3a55; margin-bottom: 10px; }
+.sg-refill-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.sg-refill-busy { font-family: var(--font-kr, sans-serif); font-weight: 700; color: #1f6fd6; }

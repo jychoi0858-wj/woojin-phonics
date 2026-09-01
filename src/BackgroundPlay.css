@@ -1,0 +1,79 @@
+/* 백그라운드 재생 모달 */
+.bgp-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px 18px 20px;
+  font-family: var(--font-kr, sans-serif);
+}
+
+.bgp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.bgp-close {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: #eef1f8; font-size: 16px; cursor: pointer;
+}
+
+.bgp-notice {
+  padding: 28px 12px; text-align: center; color: #777; line-height: 1.5;
+}
+.bgp-body { display: flex; flex-direction: column; min-height: 0; }
+.bgp-hint { font-size: 0.88rem; color: #6a3fb0; background: #f3eefc; padding: 8px 12px; border-radius: 10px; margin: 4px 0 12px; }
+
+.bgp-settings { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.bgp-set-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bgp-set-label { font-size: 0.9rem; font-weight: 700; color: #555; min-width: 38px; }
+.bgp-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.bgp-chip {
+  padding: 6px 12px; border-radius: 999px;
+  border: 2px solid #d8dbe4; background: #fff; color: #555;
+  font-family: var(--font-kr, sans-serif); font-size: 0.88rem; font-weight: 700; cursor: pointer;
+}
+.bgp-chip.active { background: #a55eea; border-color: #a55eea; color: #fff; }
+.bgp-chip:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.bgp-list-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.9rem; font-weight: 700; color: #444; margin-bottom: 6px;
+}
+.bgp-selall {
+  border: none; background: #eef1f8; color: #555;
+  padding: 5px 12px; border-radius: 999px; font-size: 0.85rem; cursor: pointer;
+}
+.bgp-list {
+  flex: 1; min-height: 80px; max-height: 38vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 6px;
+  padding-right: 4px; margin-bottom: 12px;
+}
+.bgp-item {
+  display: flex; align-items: center; gap: 10px;
+  background: #f6f8fc; border-radius: 12px; padding: 10px 12px; cursor: pointer;
+  border: 2px solid transparent;
+}
+.bgp-item.on { border-color: #c9a8f0; background: #f6f0fe; }
+.bgp-item input { width: 18px; height: 18px; flex-shrink: 0; }
+.bgp-item-text {
+  flex: 1; font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.05rem; color: #2b3a55;
+  word-break: break-word;
+}
+.bgp-item-lesson { font-size: 0.72rem; color: #999; flex-shrink: 0; }
+
+.bgp-error { color: #d14848; font-size: 0.9rem; margin-bottom: 8px; text-align: center; }
+
+.bgp-controls { display: flex; gap: 8px; }
+.bgp-play-btn {
+  flex: 1; padding: 14px; border: none; border-radius: 14px;
+  background: #a55eea; color: #fff; font-family: var(--font-kr, sans-serif);
+  font-size: 1.05rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 #8743c9;
+}
+.bgp-play-btn:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+.bgp-play-btn.pause { background: #5b8def; box-shadow: 0 3px 0 #3f6fd0; }
+.bgp-play-btn.stop { flex: 0 0 auto; background: #e85d5d; box-shadow: 0 3px 0 #c44545; }
