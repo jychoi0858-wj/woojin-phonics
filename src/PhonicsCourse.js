@@ -359,6 +359,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
       if (abortRef.current) break;
       setBlendPass(pass);
       const fast = pass === BLEND_GAPS.length - 1;   // 마지막은 붙여 읽기
+      let pending = null;                            // 아직 끝나지 않은 조각 소리
       for (let ci = 0; ci < blendChunks.length; ci++) {
         if (abortRef.current) break;
         const ch = blendChunks[ci];
@@ -366,10 +367,12 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
 
         if (!ch.sound) {
           setBlendActive(ci);                        // 묵음 글자는 표시만
-          await sleep(fast ? 120 : 250);
+          await sleep(fast ? 260 : 250);
         } else if (fast && !isLast) {
           // 앞 소리를 끝까지 기다리지 않고 다음 조각으로 (다음 재생이 앞 소리를 자름)
-          playPhonicsSound(soundFile(ch.sound), () => setBlendActive(ci)).catch(() => {});
+          // 이 패스에서는 강조를 바로 켠다 — onStart를 기다리면 순서가 뒤집힐 수 있음
+          setBlendActive(ci);
+          pending = playPhonicsSound(soundFile(ch.sound)).catch(() => {});
           await sleep(FAST_STEP);
         } else {
           // 강조는 실제로 소리가 나기 시작할 때 (onStart)
@@ -378,6 +381,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
         }
         await sleep(BLEND_GAPS[pass]);
       }
+      if (pending && !abortRef.current) await pending;  // 마지막 조각 소리가 끝날 때까지
       setBlendActive(-1);
       if (abortRef.current) break;
       await new Promise(r => setTimeout(r, fast ? 200 : 350));
