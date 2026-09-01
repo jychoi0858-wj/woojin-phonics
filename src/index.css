@@ -56,6 +56,12 @@ html {
   overscroll-behavior: none; /* 당겨서 새로고침(pull-to-refresh) 방지 */
 }
 
+/* 버튼·입력창은 폰트를 물려받지 않는다 (브라우저 기본값이 시스템 폰트)
+   → 앱 서체로 통일해 딱딱하게 보이지 않게 */
+button, input, select, textarea, optgroup {
+  font-family: inherit;
+}
+
 body {
   font-family: var(--font-kr);
   background: var(--bg-main);
