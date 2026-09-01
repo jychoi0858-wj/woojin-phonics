@@ -26,6 +26,7 @@ import WordSetCourse from './WordSetCourse';
 import WordList from './WordList';
 import ReviewQuiz from './ReviewQuiz';
 import PhonicsCourse from './PhonicsCourse';
+import { pullPhonics, clearPhonicsUser } from './phonicsSync';
 import SlingshotGame from './SlingshotGame';
 import SliceGame from './SliceGame';
 import TraceWord from './TraceWord';
@@ -1018,6 +1019,9 @@ function App() {
   useEffect(() => {
     const unsub = onAuthChange((user) => {
       setCurrentUser(user); // null or {uid, username}
+      // 파닉스 학습 진도·직접 넣은 단어를 계정과 맞춤 (기기 저장과 합침)
+      if (user && user.uid) pullPhonics(user.uid);
+      else clearPhonicsUser();
     });
     return unsub;
   }, []);

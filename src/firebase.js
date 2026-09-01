@@ -517,6 +517,32 @@ export async function loadReadingProgressFromFirestore(uid) {
     return {};
 }
 
+// ─── 파닉스 학습 (유저별) ───
+//   { progress: {소리id: {stars,tries,best}}, words: {소리id: [단어…]} }
+export async function savePhonicsToFirestore(uid, payload) {
+    try {
+        await setDoc(userDoc(uid, 'phonics_learning'), { ...payload, updatedAt: new Date().toISOString() });
+        return true;
+    } catch (e) {
+        console.warn('파닉스 학습 저장 실패:', e);
+        return false;
+    }
+}
+
+export async function loadPhonicsFromFirestore(uid) {
+    try {
+        const snap = await getDoc(userDoc(uid, 'phonics_learning'));
+        if (snap.exists()) {
+            const d = snap.data();
+            return { progress: d.progress || {}, words: d.words || {} };
+        }
+        return { progress: {}, words: {} };   // 아직 저장된 적 없음
+    } catch (e) {
+        console.warn('파닉스 학습 로드 실패:', e);
+        return null;                          // 실패 — 기기 저장을 덮어쓰지 않게 구분
+    }
+}
+
 // ─── 기존 데이터 마이그레이션 (첫 번째 유저에게) ───
 export async function migrateOldDataToUser(uid) {
     try {

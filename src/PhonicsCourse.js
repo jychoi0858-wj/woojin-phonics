@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { STAGES, SOUND_INFO, aloneNote, chunkNote } from './phonicsData';
 import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes, wordHasSound, checkWordForSound } from './phonics';
 import { customWordsOf, addCustomWord, removeCustomWord } from './phonicsWords';
+import { pushPhonics, subscribePhonicsSync } from './phonicsSync';
 import PronunceCheck from './PronunceCheck';
 import { playPhonicsSound, stopPhonicsSound, preloadPhonicsSounds, playPhonicsSequence, phonicsDuration } from './phonicsAudio';
 import { loadProgress, recordSound, starsOf, stageRatio, nextSound } from './phonicsProgress';
@@ -63,6 +64,9 @@ export default function PhonicsCourse({ allWords = [], speak, stop, azureKey, az
 
   const cont = useMemo(() => nextSound(prog), [prog]);
 
+  // 계정 동기화가 끝나면 화면을 다시 그림
+  useEffect(() => subscribePhonicsSync(() => setProg(loadProgress())), []);
+
   // 뒤로가기: 한 소리 학습 중이면 소리 지도로 (앱 홈으로 바로 나가지 않게)
   useBackHandler(() => {
     if (lesson) { if (stop) stop(); stopPhonicsSound(); setLesson(null); return true; }
@@ -81,6 +85,7 @@ export default function PhonicsCourse({ allWords = [], speak, stop, azureKey, az
         onDone={(percent) => {
           recordSound(lesson.soundId, percent);
           setProg(loadProgress());
+          pushPhonics();                 // 계정에 저장
           setLesson(null);
         }}
         onQuit={() => { if (stop) stop(); stopPhonicsSound(); setLesson(null); }}
@@ -183,8 +188,8 @@ function AddWordModal({ soundId, info, allWords = [], myWords = [], speak, onCha
   const isNew = typed.length >= 1 && !myWords.includes(typed) && !shown.includes(typed);
   const check = isNew && typed.length >= 1 ? checkWordForSound(typed, soundId, info.label) : null;
 
-  const add = (w) => { onChange(addCustomWord(soundId, w)); setQ(''); };
-  const drop = (w) => onChange(removeCustomWord(soundId, w));
+  const add = (w) => { onChange(addCustomWord(soundId, w)); setQ(''); pushPhonics(); };
+  const drop = (w) => { onChange(removeCustomWord(soundId, w)); pushPhonics(); };
   const preview = async (w) => {
     if (!speak || saying) return;
     setSaying(w);

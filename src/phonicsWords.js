@@ -16,6 +16,21 @@ function save(all) {
   try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
 }
 
+/** 서버에서 받아 온 단어로 통째로 교체 (계정 동기화용) */
+export function replaceCustomWords(all) {
+  save(all || {});
+}
+
+/** 두 목록을 합침 — 양쪽 단어를 모두 남긴다 */
+export function mergeCustomWords(a = {}, b = {}) {
+  const out = {};
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const list = [...(Array.isArray(a[id]) ? a[id] : []), ...(Array.isArray(b[id]) ? b[id] : [])];
+    out[id] = [...new Set(list)].slice(0, 30);
+  }
+  return out;
+}
+
 export function customWordsOf(soundId) {
   const all = loadCustomWords();
   return Array.isArray(all[soundId]) ? all[soundId] : [];

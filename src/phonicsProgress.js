@@ -15,6 +15,26 @@ function save(prog) {
   try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch (e) { /* ignore */ }
 }
 
+/** 서버에서 받아 온 진도로 통째로 교체 (계정 동기화용) */
+export function replaceProgress(prog) {
+  save(prog || {});
+}
+
+/** 두 진도를 합침 — 별·시도 횟수는 큰 쪽을 남긴다 */
+export function mergeProgress(a = {}, b = {}) {
+  const out = { ...a };
+  for (const [id, r] of Object.entries(b)) {
+    const cur = out[id];
+    if (!cur) { out[id] = r; continue; }
+    out[id] = {
+      stars: Math.max(cur.stars || 0, r.stars || 0),
+      tries: Math.max(cur.tries || 0, r.tries || 0),
+      best: Math.max(cur.best || 0, r.best || 0),
+    };
+  }
+  return out;
+}
+
 /** 정답률(0~100)로 별을 매김 — 한 번 딴 별은 내려가지 않음 */
 export function recordSound(soundId, percent) {
   const prog = loadProgress();
