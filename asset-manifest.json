@@ -1,12 +1,12 @@
 {
   "files": {
     "main.css": "/woojin-phonics/static/css/main.4c37e220.css",
-    "main.js": "/woojin-phonics/static/js/main.28a3ec37.js",
+    "main.js": "/woojin-phonics/static/js/main.4357d543.js",
     "static/js/206.421ffdd7.chunk.js": "/woojin-phonics/static/js/206.421ffdd7.chunk.js",
     "index.html": "/woojin-phonics/index.html"
   },
   "entrypoints": [
     "static/css/main.4c37e220.css",
-    "static/js/main.28a3ec37.js"
+    "static/js/main.4357d543.js"
   ]
 }
