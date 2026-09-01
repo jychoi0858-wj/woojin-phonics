@@ -343,8 +343,8 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
 
   // 천천히 → 조금 빠르게 → 붙여서
   //   마지막 패스는 앞 소리가 끝나기 전에 다음 조각을 시작해 실제로 이어 읽는 소리에 가깝게 만든다.
-  const BLEND_GAPS = [900, 420, 40];
-  const FAST_STEP = 260;                // 마지막 패스에서 다음 조각으로 넘어가는 간격
+  const BLEND_GAPS = [900, 420, 90];
+  const FAST_STEP = 420;                // 마지막 패스에서 다음 조각으로 넘어가는 간격
   const runBlend = async () => {
     if (busy || !blendChunks.length) return;
     const t = begin('blend');
