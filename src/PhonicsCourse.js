@@ -213,7 +213,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
       if (abortRef.current) break;
       ok = await playPhonicsSound(file);
       if (!ok) break;
-      if (i < times - 1) await new Promise(r => setTimeout(r, 2000)); // 따라 할 시간
+      if (i < times - 1) await new Promise(r => setTimeout(r, 1500)); // 따라 할 시간
     }
     if (!ok) setNoFile(true);
     end(t);

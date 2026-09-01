@@ -145,9 +145,27 @@ const CONSONANT_LIKE = new Set([
   'silent-kn', 'silent-gn', 'silent-wr',
 ]);
 
-/** 그 소리의 "혼자 vs 단어 속" 안내 문구 (없으면 null) */
+// 모음 무리별 안내 (모음은 혼자서도 단어와 같은 소리라 다른 이야기를 해 준다)
+const VOWEL_NOTE = [
+  { ids: ['short-a', 'short-e', 'short-i', 'short-o', 'short-u'],
+    text: '모음은 혼자서도 단어에서와 같은 소리예요. 길게 늘이지 말고 짧게 툭 끊어 내는 게 중요해요.' },
+  { ids: ['long-a', 'long-e', 'long-i', 'long-o', 'long-u', 'yoo'],
+    text: '알파벳 이름과 똑같은 소리예요. 짧은 소리와 헷갈리지 않게 충분히 길게 내 주세요.' },
+  { ids: ['ou', 'oi'],
+    text: '한 소리에서 다른 소리로 미끄러지듯 이어져요. 입 모양이 중간에 바뀌는 걸 느껴 보세요.' },
+  { ids: ['oo-long', 'oo-short'],
+    text: '같은 oo인데 길이가 달라요. moon은 길게, book은 짧게 툭 — 이 차이만 잡으면 돼요.' },
+  { ids: ['aw'],
+    text: '한국어 "오"보다 입을 더 크게 벌리고 턱을 내려요.' },
+  { ids: ['ar', 'or', 'er', 'air', 'ear', 'ure'],
+    text: 'r 때문에 혀가 뒤로 말려요. 한국어에 없는 움직임이라 거울을 보며 천천히 연습하면 좋아요.' },
+];
+
+/** 그 소리의 "혼자 낼 때 vs 단어 속" 안내 문구 */
 export function aloneNote(soundId) {
   if (ALONE_NOTE[soundId]) return ALONE_NOTE[soundId];
+  const v = VOWEL_NOTE.find(g => g.ids.includes(soundId));
+  if (v) return v.text;
   if (CONSONANT_LIKE.has(soundId)) return '혼자 내면 뒤에 "으"가 살짝 붙어요. 단어에서는 뒤 모음에 바로 붙여 읽어요.';
   return null;
 }

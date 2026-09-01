@@ -105,7 +105,24 @@ async function getBytes(fileName) {
 }
 
 // 디코딩까지 끝난 오디오 (재생 직전 지연을 없애기 위해 미리 준비)
-const decoded = new Map(); // 파일명 → AudioBuffer | null
+const decoded = new Map(); // 파일명 → { audio, gain } | null
+
+// 파일마다 녹음 크기가 달라서 그대로 틀면 Azure 음성보다 작게 들린다.
+// 가장 큰 진폭을 찾아 일정 크기로 맞춰 준다. (찌그러지지 않게 0.92까지만)
+const TARGET_PEAK = 0.92;
+function normalizeGain(audio) {
+  let peak = 0;
+  for (let ch = 0; ch < audio.numberOfChannels; ch++) {
+    const data = audio.getChannelData(ch);
+    const step = data.length > 100000 ? 3 : 1;   // 긴 파일은 띄엄띄엄 (속도)
+    for (let i = 0; i < data.length; i += step) {
+      const v = data[i] < 0 ? -data[i] : data[i];
+      if (v > peak) peak = v;
+    }
+  }
+  if (peak < 0.001) return 1;
+  return Math.min(8, TARGET_PEAK / peak);
+}
 
 async function getBuffer(fileName) {
   if (decoded.has(fileName)) return decoded.get(fileName);
@@ -115,8 +132,9 @@ async function getBuffer(fileName) {
     const c = audioCtx();
     const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
     const audio = await c.decodeAudioData(buf);
-    decoded.set(fileName, audio);
-    return audio;
+    const entry = { audio, gain: normalizeGain(audio) };
+    decoded.set(fileName, entry);
+    return entry;
   } catch (e) {
     decoded.set(fileName, null);
     return null;
@@ -142,14 +160,19 @@ export async function preloadPhonicsSounds(fileNames = []) {
  */
 export async function playPhonicsSound(fileName, onStart) {
   if (!fileName) return false;
-  const audio = await getBuffer(fileName);
-  if (!audio) return false;
+  const entry = await getBuffer(fileName);
+  if (!entry) return false;
+  const { audio, gain } = entry;
   try {
     const c = audioCtx();
     stopPhonicsSound();
     const src = c.createBufferSource();
     src.buffer = audio;
-    src.connect(c.destination);
+    // 녹음마다 다른 음량을 Azure 음성과 비슷한 크기로 맞춤
+    const vol = c.createGain();
+    vol.gain.value = gain;
+    src.connect(vol);
+    vol.connect(c.destination);
     curSource = src;
 
     const lead = 0.02;                                   // 예약 여유
