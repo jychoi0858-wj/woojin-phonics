@@ -61,7 +61,7 @@
 .bgp-item.on { border-color: #c9a8f0; background: #f6f0fe; }
 .bgp-item input { width: 18px; height: 18px; flex-shrink: 0; }
 .bgp-item-text {
-  flex: 1; font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.05rem; color: #2b3a55;
+  flex: 1; font-family: var(--font-en); font-size: 1.05rem; color: #2b3a55;
   word-break: break-word;
 }
 .bgp-item-lesson { font-size: 0.72rem; color: #999; flex-shrink: 0; }

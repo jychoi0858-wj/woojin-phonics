@@ -11,7 +11,7 @@
 .srg-board {
   display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
   padding: 10px; background: #fff; border-radius: 14px; margin-bottom: 6px;
-  font-family: 'Andika', 'Nunito', sans-serif;
+  font-family: var(--font-en);
 }
 .srg-word { font-size: 1.15rem; color: #2b3a55; font-weight: 700; }
 .srg-blank {
@@ -42,7 +42,7 @@
 .srg-chip {
   position: absolute; top: 0;
   padding: 10px 14px; border-radius: 12px;
-  font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 800;
+  font-family: var(--font-en); font-size: 1.15rem; font-weight: 800;
   white-space: nowrap; will-change: transform;
   box-shadow: 0 3px 6px rgba(0,0,0,0.15);
 }
@@ -65,7 +65,7 @@
 }
 .srg-title { font-size: 1.5rem; font-weight: 800; color: #2b3a55; }
 .srg-desc { font-size: 0.95rem; color: #666; line-height: 1.5; }
-.srg-cleared-sentence { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.3rem; font-weight: 700; color: #2e9e5b; }
+.srg-cleared-sentence { font-family: var(--font-en); font-size: 1.3rem; font-weight: 700; color: #2e9e5b; }
 .srg-btn {
   border: none; border-radius: 12px; padding: 12px 24px; cursor: pointer;
   font-family: var(--font-kr, sans-serif); font-size: 1.05rem; font-weight: 700;

@@ -63,7 +63,7 @@
 .sg-board {
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
   background: rgba(255,255,255,0.9); border-radius: 14px; padding: 12px 16px;
-  font-family: 'Andika', 'Nunito', sans-serif;
+  font-family: var(--font-en);
 }
 .sg-round-num {
   flex-shrink: 0;
@@ -108,7 +108,7 @@
   display: flex; align-items: center; justify-content: center;
   border-radius: 12px;
   background: #fff; border: 3px solid #5b8def; color: #2b3a55;
-  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem;
+  font-family: var(--font-en); font-weight: 800; font-size: 1.05rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.15);
   text-align: center; padding: 2px; word-break: break-word; line-height: 1.05;
   animation: sg-spawn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; /* 위에서 튀어나오는 등장 */
@@ -133,7 +133,7 @@
   position: absolute; z-index: 12;
   transform: translate(-50%, -50%);
   background: #2e9e5b; color: #fff;
-  font-family: 'Andika', 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem;
+  font-family: var(--font-en); font-weight: 800; font-size: 1.05rem;
   padding: 8px 14px; border-radius: 999px;
   box-shadow: 0 4px 10px rgba(46, 158, 91, 0.45);
   pointer-events: none;
@@ -148,7 +148,7 @@
 }
 .sg-title { font-size: 1.6rem; font-weight: 800; color: #2b3a55; }
 .sg-desc { font-size: 1rem; color: #666; line-height: 1.5; }
-.sg-cleared { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.4rem; font-weight: 700; color: #2e9e5b; }
+.sg-cleared { font-family: var(--font-en); font-size: 1.4rem; font-weight: 700; color: #2e9e5b; }
 .sg-btn { border: none; border-radius: 12px; padding: 13px 26px; cursor: pointer; font-family: var(--font-kr, sans-serif); font-size: 1.05rem; font-weight: 700; }
 .sg-btn.start { background: #ff8a3d; color: #fff; box-shadow: 0 3px 0 #d96f28; }
 .sg-btn.ghost { background: #eef1f8; color: #666; }
@@ -232,7 +232,7 @@
 .sg-bigword {
   position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
   z-index: 13; pointer-events: none;
-  font-family: 'Andika', 'Nunito', sans-serif;
+  font-family: var(--font-en);
   font-size: clamp(1.8rem, 6.5vw, 3.4rem); font-weight: 800;
   color: #1e7a45; letter-spacing: 1px; text-align: center; line-height: 1.35;
   background: rgba(255,255,255,0.94);

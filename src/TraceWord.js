@@ -43,7 +43,7 @@ export default function TraceWord({ word, speak, onComplete }) {
     const maxW = W * 0.9;
     let size = Math.floor(H * 0.82);
     for (; size > 20; size -= 2) {
-      ctx.font = `bold ${size}px Andika, Nunito, sans-serif`;
+      ctx.font = `900 ${size}px Nunito, sans-serif`;
       if ((ctx.measureText(target).width || 0) <= maxW) break;
     }
     return size;
@@ -51,7 +51,7 @@ export default function TraceWord({ word, speak, onComplete }) {
 
   const drawTextTo = useCallback((ctx, fillStyle) => {
     const size = computeFontSize();
-    ctx.font = `bold ${size}px Andika, Nunito, sans-serif`;
+    ctx.font = `900 ${size}px Nunito, sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = fillStyle;
     ctx.fillText(target, W / 2, H / 2);

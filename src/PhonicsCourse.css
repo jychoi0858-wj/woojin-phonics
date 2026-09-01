@@ -23,7 +23,7 @@
   font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
 }
 .pc-lesson-title { font-size: 1.2rem; font-weight: 800; color: #2b3a55; }
-.pc-lesson-title b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; font-size: 1.4rem; }
+.pc-lesson-title b { font-family: var(--font-en); color: #e2640f; font-size: 1.4rem; }
 
 .pc-steps { margin-left: auto; display: flex; gap: 7px; }
 .pc-steps i {
@@ -44,7 +44,7 @@
   font-family: inherit; font-size: 1.05rem; font-weight: 800;
   cursor: pointer; margin-bottom: 16px; min-height: 54px;
 }
-.pc-continue b { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.2rem; }
+.pc-continue b { font-family: var(--font-en); font-size: 1.2rem; }
 
 /* ── 소리 지도 ── */
 .pc-stages { display: flex; flex-direction: column; gap: 10px; }
@@ -87,8 +87,8 @@
 }
 .pc-sound.done { border-color: #a7dcc0; background: #f4fbf7; }
 .pc-sound-label {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 1.25rem; font-weight: 800; color: #e2640f;
+  font-family: var(--font-en);
+  font-size: 1.3rem; font-weight: 900; color: #e2640f;
 }
 .pc-sound-ko { font-size: 0.92rem; font-weight: 700; color: #44506b; }
 .pc-sound-stars { font-size: 0.72rem; color: #c9ced9; letter-spacing: 1px; }
@@ -99,8 +99,8 @@
   display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
 .pc-big {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 4rem; font-weight: 800; color: #e2640f; line-height: 1;
+  font-family: var(--font-en);
+  font-size: 4.2rem; font-weight: 900; color: #e2640f; line-height: 1;
   background: #fff3e0; border-radius: 20px; padding: 14px 34px;
 }
 .pc-ko { font-size: 1.6rem; font-weight: 800; color: #2b3a55; }
@@ -145,12 +145,12 @@
   display: flex; align-items: center; gap: 10px;
   font-size: 1.1rem; font-weight: 800; color: #2b3a55;
 }
-.pc-add-head b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; font-size: 1.3rem; }
+.pc-add-head b { font-family: var(--font-en); color: #e2640f; font-size: 1.3rem; }
 .pc-add-head .pc-close { margin-left: auto; }
 
 .pc-add-input {
   border: 2px solid #e3e7f0; border-radius: 14px; padding: 13px 16px;
-  font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.15rem;
+  font-family: var(--font-en); font-size: 1.15rem;
   min-height: 52px; outline: none;
 }
 .pc-add-input:focus { border-color: #ffb74d; }
@@ -161,11 +161,11 @@
   font-family: var(--font-kr, sans-serif); font-size: 1rem; font-weight: 700;
   display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
 }
-.pc-add-typed b { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.2rem; }
+.pc-add-typed b { font-family: var(--font-en); font-size: 1.2rem; }
 .pc-add-typed.warn { border-color: #e6b8b8; background: #fdf3f3; color: #a34141; }
 .pc-add-typed.cannot { cursor: default; border-style: solid; }
 .pc-add-chunks {
-  font-family: 'Andika', 'Nunito', sans-serif;
+  font-family: var(--font-en);
   font-size: 0.95rem; font-weight: 700; opacity: 0.9;
 }
 .pc-add-typed em {
@@ -180,7 +180,7 @@
 .pc-add-chip {
   border: 2px solid #e3e7f0; background: #f7f9fd; color: #44506b;
   border-radius: 999px; padding: 9px 14px; min-height: 42px; cursor: pointer;
-  font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 700;
+  font-family: var(--font-en); font-size: 1.05rem; font-weight: 800;
 }
 .pc-add-chip:hover { background: #eef2fa; }
 .pc-add-chip.mine {
@@ -200,8 +200,8 @@
 }
 .pc-word-card:disabled { opacity: 0.45; cursor: default; }
 .pc-word-text {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 1.35rem; font-weight: 800; color: #44506b; letter-spacing: 1px;
+  font-family: var(--font-en);
+  font-size: 1.4rem; font-weight: 900; color: #44506b; letter-spacing: 1px;
 }
 .pc-word-text .mark { color: #e2640f; background: #fff3e0; border-radius: 5px; padding: 0 2px; }
 .pc-word-play { font-size: 1.1rem; }
@@ -224,7 +224,7 @@
   font-size: 1.15rem; font-weight: 800; color: #2b3a55;
   text-align: center; word-break: keep-all; line-height: 1.6;
 }
-.pc-q b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; font-size: 1.35rem; }
+.pc-q b { font-family: var(--font-en); color: #e2640f; font-size: 1.35rem; }
 .pc-q-hint { font-size: 0.9rem; color: #8b93a5; word-break: keep-all; text-align: center; }
 
 .pc-choices { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
@@ -235,8 +235,8 @@
 }
 .pc-choice.right { border-color: #27ae60; background: #f0fbf5; }
 .pc-choice-face {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 1.6rem; font-weight: 800; color: #44506b; min-height: 40px;
+  font-family: var(--font-en);
+  font-size: 1.7rem; font-weight: 900; color: #44506b; min-height: 40px;
   display: flex; align-items: center;
 }
 .pc-choice-play {
@@ -264,8 +264,8 @@
 .pc-blend.pass3 { gap: 0; opacity: 0.25; }
 
 .pc-chunk {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 2.6rem; font-weight: 800; color: #44506b;
+  font-family: var(--font-en);
+  font-size: 2.6rem; font-weight: 900; color: #44506b;
   background: #fff; border: 3px solid #e3e7f0; border-radius: 14px;
   padding: 8px 14px; min-width: 46px; text-align: center;
   transition: transform 0.15s, background 0.15s, border-color 0.15s;
@@ -294,8 +294,8 @@
 }
 .pc-chunk-note.on { border-color: #ffd27a; background: #fffaf1; }
 .pc-note-chunk {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 1.15rem; font-weight: 800; color: #e2640f;
+  font-family: var(--font-en);
+  font-size: 1.2rem; font-weight: 900; color: #e2640f;
   background: #fff3e0; border-radius: 8px; padding: 2px 9px;
   flex-shrink: 0; min-width: 34px; text-align: center;
 }
@@ -306,8 +306,8 @@
 }
 
 .pc-blend-word {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 3.2rem; font-weight: 800; color: #2b6a45;
+  font-family: var(--font-en);
+  font-size: 3.3rem; font-weight: 900; color: #2b6a45;
   background: #eafaf1; border-radius: 18px; padding: 10px 30px;
   animation: pc-pop 0.35s ease;
 }
@@ -342,8 +342,8 @@
 /* 글자 짚기 */
 .pc-eye-word { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
 .pc-letter {
-  font-family: 'Andika', 'Nunito', sans-serif;
-  font-size: 2.4rem; font-weight: 800; color: #44506b;
+  font-family: var(--font-en);
+  font-size: 2.4rem; font-weight: 900; color: #44506b;
   background: #fff; border: 3px solid #e3e7f0; border-radius: 14px;
   min-width: 56px; min-height: 74px; cursor: pointer;
 }
@@ -368,6 +368,6 @@
 .pc-done { gap: 14px; }
 .pc-done-stars { font-size: 2.6rem; letter-spacing: 4px; }
 .pc-done-title { font-size: 1.4rem; font-weight: 800; color: #2b3a55; }
-.pc-done-title b { font-family: 'Andika', 'Nunito', sans-serif; color: #e2640f; }
+.pc-done-title b { font-family: var(--font-en); color: #e2640f; }
 .pc-done-score { font-size: 1.05rem; color: #6b7285; }
 .pc-done-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
