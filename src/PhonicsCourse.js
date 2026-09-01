@@ -341,7 +341,10 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
   const blendWord = blendWords[blendIdx] || '';
   const blendChunks = useMemo(() => splitGraphemes(blendWord), [blendWord]);
 
-  const BLEND_GAPS = [900, 450, 120];   // 천천히 → 조금 빠르게 → 붙여서
+  // 천천히 → 조금 빠르게 → 붙여서
+  //   마지막 패스는 앞 소리가 끝나기 전에 다음 조각을 시작해 실제로 이어 읽는 소리에 가깝게 만든다.
+  const BLEND_GAPS = [900, 420, 40];
+  const FAST_STEP = 260;                // 마지막 패스에서 다음 조각으로 넘어가는 간격
   const runBlend = async () => {
     if (busy || !blendChunks.length) return;
     const t = begin('blend');
@@ -350,25 +353,34 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
     await preloadPhonicsSounds(blendChunks.map(ch => soundFile(ch.sound)));
     if (abortRef.current) { end(t); return; }
 
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     for (let pass = 0; pass < BLEND_GAPS.length; pass++) {
       if (abortRef.current) break;
       setBlendPass(pass);
+      const fast = pass === BLEND_GAPS.length - 1;   // 마지막은 붙여 읽기
       for (let ci = 0; ci < blendChunks.length; ci++) {
         if (abortRef.current) break;
         const ch = blendChunks[ci];
-        if (ch.sound) {
+        const isLast = ci === blendChunks.length - 1;
+
+        if (!ch.sound) {
+          setBlendActive(ci);                        // 묵음 글자는 표시만
+          await sleep(fast ? 120 : 250);
+        } else if (fast && !isLast) {
+          // 앞 소리를 끝까지 기다리지 않고 다음 조각으로 (다음 재생이 앞 소리를 자름)
+          playPhonicsSound(soundFile(ch.sound), () => setBlendActive(ci)).catch(() => {});
+          await sleep(FAST_STEP);
+        } else {
           // 강조는 실제로 소리가 나기 시작할 때 (onStart)
           const ok = await playPhonicsSound(soundFile(ch.sound), () => setBlendActive(ci));
           if (!ok) { setNoFile(true); setBlendActive(ci); }
-        } else {
-          setBlendActive(ci);   // 묵음 글자는 소리 없이 잠깐 표시만
-          await new Promise(r => setTimeout(r, 250));
         }
-        await new Promise(r => setTimeout(r, BLEND_GAPS[pass]));
+        await sleep(BLEND_GAPS[pass]);
       }
       setBlendActive(-1);
       if (abortRef.current) break;
-      await new Promise(r => setTimeout(r, 350));
+      await new Promise(r => setTimeout(r, fast ? 200 : 350));
     }
     if (!abortRef.current) {
       setBlendPass(3);                       // 조각이 하나로 합쳐짐
