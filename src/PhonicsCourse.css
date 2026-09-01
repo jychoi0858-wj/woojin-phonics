@@ -175,6 +175,64 @@
 }
 .pc-choice-pick:disabled { opacity: 0.4; box-shadow: none; cursor: default; }
 
+/* 블렌딩 — 조각이 점점 가까워지다 합쳐짐 */
+.pc-blend {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; margin: 10px 0 4px;
+  transition: gap 0.4s ease;
+}
+.pc-blend.pass0 { gap: 26px; }
+.pc-blend.pass1 { gap: 12px; }
+.pc-blend.pass2 { gap: 3px; }
+.pc-blend.pass3 { gap: 0; opacity: 0.25; }
+
+.pc-chunk {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 2.6rem; font-weight: 800; color: #44506b;
+  background: #fff; border: 3px solid #e3e7f0; border-radius: 14px;
+  padding: 8px 14px; min-width: 46px; text-align: center;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+.pc-chunk.active {
+  background: #fff3e0; border-color: #ffb74d; color: #e2640f;
+  transform: translateY(-8px) scale(1.08);
+}
+.pc-chunk.silent { color: #c9ced9; border-style: dashed; }
+
+.pc-blend-word {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 3.2rem; font-weight: 800; color: #2b6a45;
+  background: #eafaf1; border-radius: 18px; padding: 10px 30px;
+  animation: pc-pop 0.35s ease;
+}
+@keyframes pc-pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.pc-blend-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.pc-mic-btn {
+  border: none; border-radius: 16px; padding: 15px 26px; min-height: 56px;
+  background: #4a90d9; color: #fff; box-shadow: 0 3px 0 #3574b0;
+  font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer;
+}
+.pc-mic-panel {
+  width: 100%; max-width: 520px; background: #fff;
+  border-radius: 16px; padding: 14px; display: flex; flex-direction: column; align-items: center;
+}
+
+.pc-blend-nav {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  justify-content: center; margin-top: 6px;
+}
+.pc-blend-dot {
+  width: 42px; height: 42px; border-radius: 999px;
+  border: 2px solid #e3e7f0; background: #fff; color: #8b93a5;
+  font-family: inherit; font-size: 1rem; font-weight: 800; cursor: pointer;
+}
+.pc-blend-dot.on { border-color: #ffb74d; background: #fff6e6; color: #a5771a; }
+.pc-next-btn.small { padding: 12px 20px; min-height: 46px; font-size: 0.98rem; margin-top: 0; }
+
 /* 글자 짚기 */
 .pc-eye-word { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
 .pc-letter {

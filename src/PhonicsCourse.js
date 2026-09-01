@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { STAGES, SOUND_INFO } from './phonicsData';
-import { soundFile, wordsForSound, wordsWithoutSound, marksForSound } from './phonics';
+import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes } from './phonics';
+import PronunceCheck from './PronunceCheck';
 import { playPhonicsSound, stopPhonicsSound } from './phonicsAudio';
 import { loadProgress, recordSound, starsOf, stageRatio, nextSound } from './phonicsProgress';
 import useBackHandler from './useBackHandler';
@@ -53,7 +54,7 @@ function sfx(kind) {
  *   stop      발음 중지
  *   onClose   나가기
  */
-export default function PhonicsCourse({ allWords = [], speak, stop, onClose }) {
+export default function PhonicsCourse({ allWords = [], speak, stop, azureKey, azureRegion, onClose }) {
   const [prog, setProg] = useState(loadProgress);
   // 처음 열 때는 아직 안 한 소리가 있는 단계를 펼쳐 둠
   const [openStage, setOpenStage] = useState(() => (nextSound(loadProgress()) || {}).stageId || 1);
@@ -74,6 +75,8 @@ export default function PhonicsCourse({ allWords = [], speak, stop, onClose }) {
         allWords={allWords}
         speak={speak}
         stop={stop}
+        azureKey={azureKey}
+        azureRegion={azureRegion}
         onDone={(percent) => {
           recordSound(lesson.soundId, percent);
           setProg(loadProgress());
@@ -152,8 +155,9 @@ export default function PhonicsCourse({ allWords = [], speak, stop, onClose }) {
 // ============================================================
 const EAR_ROUNDS = 3;
 const EYE_ROUNDS = 3;
+const ORDER = ['listen', 'blend', 'ear', 'eye'];
 
-function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
+function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, onDone, onQuit }) {
   const info = SOUND_INFO[soundId] || { label: soundId, ko: '', tip: '', words: [] };
   const file = soundFile(soundId);
 
@@ -167,7 +171,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
     [soundId, allWords]
   );
 
-  const [step, setStep] = useState('listen');   // listen | ear | eye | done
+  const [step, setStep] = useState('listen');   // listen | blend | ear | eye | done
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [picked, setPicked] = useState(null);   // 이번 문제에서 고른 것
@@ -215,6 +219,54 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
     try { await speak(w); } catch (e) { /* ignore */ }
     if (!abortRef.current) await new Promise(r => setTimeout(r, 150));
     end(t);
+  };
+
+  // ── ② 블렌딩: 조각 소리를 점점 빠르게 이어 붙여 단어로 ──
+  const blendWords = useMemo(() => targets.slice(0, 3), [targets]);
+  const [blendIdx, setBlendIdx] = useState(0);
+  const [blendPass, setBlendPass] = useState(-1);   // -1 대기, 0~2 진행, 3 합쳐짐
+  const [blendActive, setBlendActive] = useState(-1);
+  const [showMic, setShowMic] = useState(false);
+
+  const blendWord = blendWords[blendIdx] || '';
+  const blendChunks = useMemo(() => splitGraphemes(blendWord), [blendWord]);
+
+  const BLEND_GAPS = [900, 450, 120];   // 천천히 → 조금 빠르게 → 붙여서
+  const runBlend = async () => {
+    if (busy || !blendChunks.length) return;
+    const t = begin('blend');
+    setShowMic(false);
+    for (let pass = 0; pass < BLEND_GAPS.length; pass++) {
+      if (abortRef.current) break;
+      setBlendPass(pass);
+      for (let ci = 0; ci < blendChunks.length; ci++) {
+        if (abortRef.current) break;
+        setBlendActive(ci);
+        const ch = blendChunks[ci];
+        if (ch.sound) {
+          const ok = await playPhonicsSound(soundFile(ch.sound));
+          if (!ok) setNoFile(true);
+        }
+        await new Promise(r => setTimeout(r, BLEND_GAPS[pass]));
+      }
+      setBlendActive(-1);
+      if (abortRef.current) break;
+      await new Promise(r => setTimeout(r, 350));
+    }
+    if (!abortRef.current) {
+      setBlendPass(3);                       // 조각이 하나로 합쳐짐
+      await new Promise(r => setTimeout(r, 300));
+      if (speak && !abortRef.current) await speak(blendWord);
+    }
+    end(t);
+  };
+
+  const gotoBlendWord = (i) => {
+    stopAll();
+    setBlendIdx(i);
+    setBlendPass(-1);
+    setBlendActive(-1);
+    setShowMic(false);
   };
 
   // ── 문제 만들기 ──
@@ -266,8 +318,8 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
         <button className="pc-back" onClick={onQuit}>← 소리 지도</button>
         <span className="pc-lesson-title"><b>{info.label}</b> 소리</span>
         <span className="pc-steps">
-          {(hasEye ? ['listen', 'ear', 'eye'] : ['listen', 'ear']).map((s, i) => (
-            <i key={s} className={step === s ? 'on' : (['listen', 'ear', 'eye'].indexOf(step) > i ? 'done' : '')} />
+          {(hasEye ? ORDER : ORDER.filter(s => s !== 'eye')).map((s, i) => (
+            <i key={s} className={step === s ? 'on' : (ORDER.indexOf(step) > ORDER.indexOf(s) ? 'done' : '')} />
           ))}
         </span>
       </div>
@@ -304,9 +356,69 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
             })}
           </div>
 
-          <button className="pc-next-btn" onClick={() => { stopAll(); setPicked(null); setStep('ear'); setRound(0); }}>
+          <button className="pc-next-btn" onClick={() => { stopAll(); setPicked(null); gotoBlendWord(0); setStep('blend'); }}>
             다 들었어요 →
           </button>
+        </div>
+      )}
+
+      {/* ② 블렌딩 — 조각 소리를 이어 붙여 단어로 */}
+      {step === 'blend' && blendWord && (
+        <div className="pc-panel">
+          <div className="pc-q">소리를 이어 붙이면 단어가 돼요</div>
+          <div className="pc-q-hint">조각이 하나씩 소리 나고, 점점 빨라지다 한 단어가 돼요.</div>
+
+          <div className={`pc-blend pass${blendPass < 0 ? 0 : blendPass}`}>
+            {blendChunks.map((ch, ci) => (
+              <span
+                key={ci}
+                className={`pc-chunk ${ch.silent ? 'silent' : ''} ${blendActive === ci ? 'active' : ''}`}
+              >
+                {ch.text}
+              </span>
+            ))}
+          </div>
+          {blendPass === 3 && <div className="pc-blend-word">{blendWord}</div>}
+
+          <div className="pc-blend-btns">
+            {busy === 'blend' ? (
+              <button className="pc-main-btn" onClick={stopAll}>⏹️ 멈춤</button>
+            ) : (
+              <button className="pc-main-btn" onClick={runBlend} disabled={!!busy}>
+                {blendPass === 3 ? '🔁 다시 이어 보기' : '▶️ 이어 보기'}
+              </button>
+            )}
+            {azureKey && azureRegion && blendPass === 3 && !showMic && (
+              <button className="pc-mic-btn" onClick={() => { stopAll(); setShowMic(true); }}>
+                🎤 내가 읽어 볼래
+              </button>
+            )}
+          </div>
+
+          {noFile && <div className="pc-nofile">아직 소리 음원이 등록되지 않았어요. (설정에서 올릴 수 있어요)</div>}
+
+          {showMic && (
+            <div className="pc-mic-panel">
+              <PronunceCheck word={blendWord} azureKey={azureKey} azureRegion={azureRegion} speak={speak} />
+              <button className="pc-again-btn" onClick={() => setShowMic(false)}>닫기</button>
+            </div>
+          )}
+
+          <div className="pc-blend-nav">
+            {blendWords.map((w, i) => (
+              <button key={w} className={`pc-blend-dot ${i === blendIdx ? 'on' : ''}`}
+                onClick={() => gotoBlendWord(i)}>{i + 1}</button>
+            ))}
+            {blendIdx < blendWords.length - 1 ? (
+              <button className="pc-next-btn small" onClick={() => gotoBlendWord(blendIdx + 1)}>
+                다음 단어 →
+              </button>
+            ) : (
+              <button className="pc-next-btn small" onClick={() => { stopAll(); setShowMic(false); setPicked(null); setStep('ear'); setRound(0); }}>
+                퀴즈 풀러 가기 →
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -384,7 +496,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
           <div className="pc-done-score">{total}개 중 {correct}개 맞았어요</div>
           <div className="pc-done-btns">
             <button className="pc-next-btn" onClick={() => onDone(percent)}>소리 지도로</button>
-            <button className="pc-again-btn" onClick={() => { setStep('listen'); setRound(0); setCorrect(0); setPicked(null); }}>
+            <button className="pc-again-btn" onClick={() => { setStep('listen'); setRound(0); setCorrect(0); setPicked(null); gotoBlendWord(0); }}>
               🔁 한 번 더
             </button>
           </div>

@@ -3125,6 +3125,8 @@ function App() {
             allWords={flattenAllDays(data).flatMap(d => d.words || [])}
             speak={speakWordSimple}
             stop={stopWordPlay}
+            azureKey={azureKey}
+            azureRegion={azureRegion}
             onClose={() => setScreen('learning')}
           />
         </main>

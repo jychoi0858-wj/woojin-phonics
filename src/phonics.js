@@ -207,6 +207,107 @@ export function soundFile(soundId) {
 }
 
 // ============================================================
+// 블렌딩 — 단어를 "소리 조각"으로 쪼개기
+//   cat  → c · a · t
+//   ship → sh · i · p
+//   cake → c · a(길게) · k · e(묵음)
+//   조각마다 낼 소리(sound id)를 함께 알려 준다.
+// ============================================================
+
+// 두 글자 이상이 한 소리를 내는 조합 (긴 것부터 먼저 확인)
+const GRAPHEMES = [
+  'igh', 'air', 'ear', 'are', 'ure', 'tch', 'dge',
+  'sh', 'ch', 'th', 'ng', 'ck', 'qu', 'wh', 'ph', 'kn', 'gn', 'wr',
+  'ai', 'ay', 'ea', 'ee', 'ey', 'ie', 'oa', 'oe', 'oi', 'oy', 'ou', 'ow', 'oo',
+  'ue', 'ui', 'au', 'aw', 'ar', 'er', 'ir', 'or', 'ur',
+];
+
+const G_SOUND = {
+  sh: 'sh', ch: 'ch', th: 'th', ng: 'ng', ck: 'k', qu: 'qu', wh: 'wh', ph: 'f',
+  kn: 'silent-kn', gn: 'silent-gn', wr: 'silent-wr',
+  ai: 'long-a', ay: 'long-a', ea: 'long-e', ee: 'long-e', ey: 'long-e', ie: 'long-i',
+  oa: 'long-o', oe: 'long-o', oi: 'oi', oy: 'oi', ou: 'ou', ow: 'ou',
+  oo: 'oo-long', ue: 'long-u', ui: 'oo-long', au: 'aw', aw: 'aw',
+  ar: 'ar', er: 'er', ir: 'er', or: 'or', ur: 'er',
+  igh: 'long-i', air: 'air', ear: 'ear', are: 'air', ure: 'ure', tch: 'ch', dge: 'j',
+  b: 'b', c: 'k', d: 'd', f: 'f', g: 'g', h: 'h', j: 'j', k: 'k', l: 'l', m: 'm',
+  n: 'n', p: 'p', r: 'r', s: 's', t: 't', v: 'v', w: 'w', x: 'ks', y: 'y', z: 'z',
+};
+const LONG_V = { a: 'long-a', e: 'long-e', i: 'long-i', o: 'long-o', u: 'long-u' };
+const SHORT_V = { a: 'short-a', e: 'short-e', i: 'short-i', o: 'short-o', u: 'short-u' };
+
+/**
+ * 단어를 소리 조각으로 쪼갬
+ * @returns [{ text, sound, silent }]  silent=true면 소리가 나지 않는 글자
+ */
+export function splitGraphemes(word) {
+  const w = norm(word);
+  if (!w) return [];
+  const magicE = /[aeiou][bcdfgklmnprstvz]e$/.test(w);   // cake, kite, rope …
+  const out = [];
+  let i = 0;
+  while (i < w.length) {
+    // 매직 e의 끝 e는 소리가 없음
+    if (magicE && i === w.length - 1 && w[i] === 'e') {
+      out.push({ text: 'e', sound: null, silent: true });
+      i += 1;
+      continue;
+    }
+    let hit = null;
+    for (const g of GRAPHEMES) {
+      if (!w.startsWith(g, i)) continue;
+      if ((g === 'kn' || g === 'gn' || g === 'wr') && i !== 0) continue;   // 단어 맨 앞에서만
+      if ((g === 'are' || g === 'ure') && i + g.length !== w.length) continue; // 끝에서만
+      hit = g;
+      break;
+    }
+    if (hit) {
+      out.push({ text: hit, sound: G_SOUND[hit] || null });
+      i += hit.length;
+      continue;
+    }
+    const c = w[i];
+    const next = w[i + 1];
+    let sound;
+    if (SHORT_V[c]) {
+      // 매직 e 앞의 모음은 길게 (cake의 a)
+      sound = (magicE && i === w.length - 3) ? LONG_V[c] : SHORT_V[c];
+    } else if (c === 'c' && 'eiy'.includes(next)) {
+      sound = 'soft-c';
+    } else if (c === 'g' && 'eiy'.includes(next)) {
+      sound = 'soft-g';
+    } else if (c === 'y' && i === w.length - 1 && w.length > 2) {
+      // 단어 끝의 y는 모음 — 앞에 다른 모음이 있으면 "이-"(city), 없으면 "아이"(fly)
+      sound = /[aeiou]/.test(w.slice(0, i)) ? 'long-e' : 'long-i';
+    } else {
+      sound = G_SOUND[c] || null;
+    }
+    out.push({ text: c, sound });
+    i += 1;
+  }
+  return applyBlendExceptions(w, out);
+}
+
+// 규칙만으로는 틀리는 낱말들 보정
+const OO_SHORT_WORDS = /^(book|good|look|took|foot|wood|cook|hook|stood|wool|hood|shook|brook|crook)\w*$/;
+const YOO_WORDS = /^(cute|use|used|cube|mute|fuse|huge|music|human|unit|uniform|menu|cucumber)\w*$/;
+const TH_VOICED_WORDS = /^(the|this|that|these|those|they|them|then|there|their|than|though|father|mother|brother|other|weather|together|feather|leather)\w*$/;
+
+function applyBlendExceptions(w, chunks) {
+  if (OO_SHORT_WORDS.test(w)) {
+    for (const c of chunks) if (c.text === 'oo') c.sound = 'oo-short';
+  }
+  if (YOO_WORDS.test(w)) {
+    const u = chunks.find(c => c.text === 'u');
+    if (u) u.sound = 'yoo';
+  }
+  if (TH_VOICED_WORDS.test(w)) {
+    for (const c of chunks) if (c.text === 'th') c.sound = 'th-voiced';
+  }
+  return chunks;
+}
+
+// ============================================================
 // 소리 기준으로 단어 찾기 (파닉스 학습 탭용)
 //   findPattern은 "단어 → 대표 소리 하나"를 준다.
 //   여기서는 반대로 "소리 → 그 소리가 든 단어들"이 필요하다.
