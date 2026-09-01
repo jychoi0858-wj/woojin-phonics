@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { STAGES, SOUND_INFO, aloneNote, chunkNote } from './phonicsData';
-import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes, wordHasSound } from './phonics';
+import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes, wordHasSound, checkWordForSound } from './phonics';
 import { customWordsOf, addCustomWord, removeCustomWord } from './phonicsWords';
 import PronunceCheck from './PronunceCheck';
 import { playPhonicsSound, stopPhonicsSound, preloadPhonicsSounds, playPhonicsSequence, phonicsDuration } from './phonicsAudio';
@@ -179,8 +179,9 @@ function AddWordModal({ soundId, info, allWords = [], myWords = [], speak, onCha
     return candidates.filter(w => w.includes(typed)).slice(0, 24);
   }, [candidates, typed]);
 
-  const canTypeIn = typed.length >= 2 && !myWords.includes(typed) && !shown.includes(typed);
-  const typedHasSound = canTypeIn ? wordHasSound(typed, soundId) : true;
+  // 입력한 단어를 이 소리 연습에 쓸 수 있는지 (쓸 수 없으면 이유를 알려 줌)
+  const isNew = typed.length >= 1 && !myWords.includes(typed) && !shown.includes(typed);
+  const check = isNew && typed.length >= 1 ? checkWordForSound(typed, soundId, info.label) : null;
 
   const add = (w) => { onChange(addCustomWord(soundId, w)); setQ(''); };
   const drop = (w) => onChange(removeCustomWord(soundId, w));
@@ -207,11 +208,20 @@ function AddWordModal({ soundId, info, allWords = [], myWords = [], speak, onCha
           autoFocus
         />
 
-        {canTypeIn && (
-          <button className={`pc-add-typed ${typedHasSound ? '' : 'warn'}`} onClick={() => add(typed)}>
-            ➕ <b>{typed}</b> 넣기
-            {!typedHasSound && <em>이 단어에서는 {info.label} 소리를 찾지 못했어요. 그래도 넣을 수 있어요.</em>}
-          </button>
+        {check && (
+          check.ok ? (
+            <button className="pc-add-typed" onClick={() => add(typed)}>
+              ➕ <b>{typed}</b> 넣기
+              <em className="pc-add-chunks">
+                소리 조각: {check.chunks.map(c => c.silent ? `${c.text}(묵음)` : c.text).join(' · ')}
+              </em>
+            </button>
+          ) : (
+            <div className="pc-add-typed warn cannot">
+              <span>⚠️ <b>{typed}</b> 는 넣을 수 없어요</span>
+              <em>{check.text}</em>
+            </div>
+          )
         )}
 
         {myWords.length > 0 && (

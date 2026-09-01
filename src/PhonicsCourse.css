@@ -163,6 +163,11 @@
 }
 .pc-add-typed b { font-family: 'Andika', 'Nunito', sans-serif; font-size: 1.2rem; }
 .pc-add-typed.warn { border-color: #e6b8b8; background: #fdf3f3; color: #a34141; }
+.pc-add-typed.cannot { cursor: default; border-style: solid; }
+.pc-add-chunks {
+  font-family: 'Andika', 'Nunito', sans-serif;
+  font-size: 0.95rem; font-weight: 700; opacity: 0.9;
+}
 .pc-add-typed em {
   font-style: normal; font-size: 0.82rem; font-weight: 600; opacity: 0.85; word-break: keep-all;
 }

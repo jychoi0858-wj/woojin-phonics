@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { isWeakStat, reasonList } from './learningStats';
-import { findPattern, findSoundFriends, soundFile } from './phonics';
+import { findPattern, findSoundFriends, soundFile, isIrregular } from './phonics';
 import { playPhonicsSound, stopPhonicsSound } from './phonicsAudio';
 import PronunceCheck from './PronunceCheck';
 import './WordActivities.css';
@@ -214,6 +214,16 @@ export default function WordList({ words = [], meanings = {}, wordStats = {}, al
                       <div className="wlist-ko">{ko || <span className="wlist-ko-none">뜻이 등록되지 않았어요</span>}</div>
                       {/* 소리 조각 — 파닉스 패턴 강조 + 같은 소리 친구 */}
                       {(() => {
+                        // 규칙으로 읽히지 않는 단어 — 쪼개지 말고 통째로
+                        if (isIrregular(w)) {
+                          return (
+                            <div className="wlist-phonics">
+                              <div className="wlist-ph-nosound">
+                                💛 <b>{w}</b>는 파닉스 규칙대로 읽히지 않아요. 소리를 쪼개지 말고 통째로 기억해요.
+                              </div>
+                            </div>
+                          );
+                        }
                         const p = findPattern(w);
                         if (!p) return null;
                         const friends = findSoundFriends(w, allWords, 3);

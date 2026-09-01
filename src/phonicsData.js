@@ -81,7 +81,7 @@ export const SOUND_INFO = {
   'th': { label: 'th', ko: '쓰', tip: '혀를 살짝 물고 바람만 내요', words: ['thin', 'think', 'bath', 'math'] },
   'th-voiced': { label: 'th', ko: '드', tip: '혀를 물고 목을 울려요', words: ['the', 'this', 'that', 'they'] },
   'ng': { label: 'ng', ko: '응', tip: '코로 "응~"', words: ['ring', 'sing', 'king', 'long'] },
-  'qu': { label: 'qu', ko: '쿠', tip: 'q는 늘 u와 함께 다녀요', words: ['queen', 'quick', 'quiz', 'quiet'] },
+  'qu': { label: 'qu', ko: '쿠', tip: 'q는 늘 u와 함께 다녀요', words: ['queen', 'quick', 'quiz', 'quilt'] },
   'wh': { label: 'wh', ko: '후', tip: '촛불을 끄듯 "후"', words: ['what', 'when', 'white', 'wheel'] },
 
   // ── 마법의 e ──
@@ -105,7 +105,7 @@ export const SOUND_INFO = {
   'er': { label: 'er / ir / ur', ko: '어r', tip: '"어" 하면서 혀를 말아요', words: ['bird', 'girl', 'turn', 'her'] },
   'air': { label: 'air / are', ko: '에어r', tip: '"에어" 하고 이어요', words: ['hair', 'chair', 'care', 'share'] },
   'ear': { label: 'ear', ko: '이어r', tip: '"이어" 하고 이어요', words: ['ear', 'hear', 'near', 'year'] },
-  'ure': { label: 'ure', ko: '유어r', tip: '"유어" 하고 이어요', words: ['pure', 'cure', 'sure', 'lure'] },
+  'ure': { label: 'ure', ko: '유어r', tip: '"유어" 하고 이어요', words: ['pure', 'cure', 'lure', 'secure'] },
 
   // ── 조용한 글자 ──
   'silent-kn': { label: 'kn', ko: '느', tip: 'k는 소리를 내지 않아요', words: ['knee', 'knife', 'knock', 'know'] },
