@@ -543,6 +543,29 @@ export async function loadPhonicsFromFirestore(uid) {
     }
 }
 
+// ─── 세트학습 진도 (유저별) ───
+//   { "word-2026-09-lesson1": {idx, stage, at}, ... }
+export async function saveSetProgressToFirestore(uid, all) {
+    try {
+        await setDoc(userDoc(uid, 'set_progress'), { items: all, updatedAt: new Date().toISOString() });
+        return true;
+    } catch (e) {
+        console.warn('세트학습 진도 저장 실패:', e);
+        return false;
+    }
+}
+
+export async function loadSetProgressFromFirestore(uid) {
+    try {
+        const snap = await getDoc(userDoc(uid, 'set_progress'));
+        if (snap.exists()) return snap.data().items || {};
+        return {};
+    } catch (e) {
+        console.warn('세트학습 진도 로드 실패:', e);
+        return null;   // 실패 — 기기 저장을 덮어쓰지 않게 구분
+    }
+}
+
 // ─── 기존 데이터 마이그레이션 (첫 번째 유저에게) ───
 export async function migrateOldDataToUser(uid) {
     try {
