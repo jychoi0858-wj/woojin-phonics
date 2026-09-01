@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { STAGES, SOUND_INFO } from './phonicsData';
+import { STAGES, SOUND_INFO, aloneNote } from './phonicsData';
 import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes } from './phonics';
 import PronunceCheck from './PronunceCheck';
-import { playPhonicsSound, stopPhonicsSound } from './phonicsAudio';
+import { playPhonicsSound, stopPhonicsSound, preloadPhonicsSounds } from './phonicsAudio';
 import { loadProgress, recordSound, starsOf, stageRatio, nextSound } from './phonicsProgress';
 import useBackHandler from './useBackHandler';
 import './PhonicsCourse.css';
@@ -182,6 +182,13 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
 
   useEffect(() => () => { abortRef.current = true; stopPhonicsSound(); if (stop) stop(); }, [stop]);
 
+  // 이 소리와 예시 단어 조각들의 음원을 미리 준비해 둠
+  useEffect(() => {
+    const files = [file, ...targets.slice(0, 3).flatMap(w => splitGraphemes(w).map(ch => soundFile(ch.sound)))];
+    preloadPhonicsSounds(files);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soundId]);
+
   const begin = (key) => {
     const t = ++runRef.current;
     abortRef.current = false;
@@ -236,16 +243,23 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
     if (busy || !blendChunks.length) return;
     const t = begin('blend');
     setShowMic(false);
+    // 먼저 조각 음원을 모두 준비 (내려받기·디코딩 때문에 첫 소리가 밀리지 않게)
+    await preloadPhonicsSounds(blendChunks.map(ch => soundFile(ch.sound)));
+    if (abortRef.current) { end(t); return; }
+
     for (let pass = 0; pass < BLEND_GAPS.length; pass++) {
       if (abortRef.current) break;
       setBlendPass(pass);
       for (let ci = 0; ci < blendChunks.length; ci++) {
         if (abortRef.current) break;
-        setBlendActive(ci);
         const ch = blendChunks[ci];
         if (ch.sound) {
-          const ok = await playPhonicsSound(soundFile(ch.sound));
-          if (!ok) setNoFile(true);
+          // 강조는 실제로 소리가 나기 시작할 때 (onStart)
+          const ok = await playPhonicsSound(soundFile(ch.sound), () => setBlendActive(ci));
+          if (!ok) { setNoFile(true); setBlendActive(ci); }
+        } else {
+          setBlendActive(ci);   // 묵음 글자는 소리 없이 잠깐 표시만
+          await new Promise(r => setTimeout(r, 250));
         }
         await new Promise(r => setTimeout(r, BLEND_GAPS[pass]));
       }
@@ -315,7 +329,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
   return (
     <div className="pc-wrap">
       <div className="pc-head">
-        <button className="pc-back" onClick={onQuit}>← 소리 지도</button>
+        <button className="pc-back" onClick={onQuit}>← 돌아가기</button>
         <span className="pc-lesson-title"><b>{info.label}</b> 소리</span>
         <span className="pc-steps">
           {(hasEye ? ORDER : ORDER.filter(s => s !== 'eye')).map((s, i) => (
@@ -330,6 +344,9 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
           <div className="pc-big">{info.label}</div>
           <div className="pc-ko">{info.ko}</div>
           <div className="pc-tip">💡 {info.tip}</div>
+          {aloneNote(soundId) && (
+            <div className="pc-alone">🎧 {aloneNote(soundId)}</div>
+          )}
           {busy === 'sound' ? (
             <button className="pc-main-btn" onClick={stopAll}>⏹️ 멈춤</button>
           ) : (

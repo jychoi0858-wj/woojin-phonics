@@ -220,6 +220,8 @@ const GRAPHEMES = [
   'sh', 'ch', 'th', 'ng', 'ck', 'qu', 'wh', 'ph', 'kn', 'gn', 'wr',
   'ai', 'ay', 'ea', 'ee', 'ey', 'ie', 'oa', 'oe', 'oi', 'oy', 'ou', 'ow', 'oo',
   'ue', 'ui', 'au', 'aw', 'ar', 'er', 'ir', 'or', 'ur',
+  // 겹자음은 한 소리 (ball의 ll, mess의 ss)
+  'll', 'ss', 'ff', 'zz', 'tt', 'dd', 'pp', 'bb', 'gg', 'nn', 'mm', 'rr', 'cc',
 ];
 
 const G_SOUND = {
@@ -230,6 +232,8 @@ const G_SOUND = {
   oo: 'oo-long', ue: 'long-u', ui: 'oo-long', au: 'aw', aw: 'aw',
   ar: 'ar', er: 'er', ir: 'er', or: 'or', ur: 'er',
   igh: 'long-i', air: 'air', ear: 'ear', are: 'air', ure: 'ure', tch: 'ch', dge: 'j',
+  ll: 'l', ss: 's', ff: 'f', zz: 'z', tt: 't', dd: 'd', pp: 'p', bb: 'b',
+  gg: 'g', nn: 'n', mm: 'm', rr: 'r', cc: 'k',
   b: 'b', c: 'k', d: 'd', f: 'f', g: 'g', h: 'h', j: 'j', k: 'k', l: 'l', m: 'm',
   n: 'n', p: 'p', r: 'r', s: 's', t: 't', v: 'v', w: 'w', x: 'ks', y: 'y', z: 'z',
 };
@@ -293,6 +297,44 @@ const OO_SHORT_WORDS = /^(book|good|look|took|foot|wood|cook|hook|stood|wool|hoo
 const YOO_WORDS = /^(cute|use|used|cube|mute|fuse|huge|music|human|unit|uniform|menu|cucumber)\w*$/;
 const TH_VOICED_WORDS = /^(the|this|that|these|those|they|them|then|there|their|than|though|father|mother|brother|other|weather|together|feather|leather)\w*$/;
 
+// 소리가 나지 않는 글자들
+//   mb$  lamb, comb, thumb, climb      mn$  autumn, column
+//   bt   doubt, debt                   alk/alf/alm  walk, half, calm (l 묵음 + a는 "오-")
+function applySilentLetters(w, chunks) {
+  const mark = (idx) => { if (chunks[idx]) { chunks[idx].sound = null; chunks[idx].silent = true; } };
+  const last = chunks.length - 1;
+  if (/mb$/.test(w) && chunks[last] && chunks[last].text === 'b') mark(last);
+  if (/mn$/.test(w) && chunks[last] && chunks[last].text === 'n') mark(last);
+  if (/bt/.test(w)) {
+    const i = chunks.findIndex((c, k) => c.text === 'b' && chunks[k + 1] && chunks[k + 1].text === 't');
+    if (i >= 0) mark(i);
+  }
+  if (/a(lk|lf|lm)/.test(w)) {
+    const i = chunks.findIndex((c, k) => c.text === 'l' && k > 0 && chunks[k - 1].text === 'a');
+    if (i > 0) { mark(i); chunks[i - 1].sound = 'aw'; }   // walk, half, calm
+  }
+  // ball, call, salt, bald — l 앞의 a는 "오-"
+  if (/a(ll|lt|ld)/.test(w)) {
+    const i = chunks.findIndex((c, k) => c.text === 'a' && chunks[k + 1] && chunks[k + 1].text[0] === 'l');
+    if (i >= 0) chunks[i].sound = 'aw';
+  }
+  // old, cold, most, post / find, mind, child, wild — 모음이 길어짐
+  const longVowel = (want, re, letter) => {
+    if (!re.test(w)) return;
+    const i = chunks.findIndex(c => c.text === letter);
+    if (i >= 0) chunks[i].sound = want;
+  };
+  longVowel('long-o', /o(ld|lt|st|mb)$/, 'o');   // old, most, comb
+  longVowel('long-i', /i(nd|ld|mb)$/, 'i');      // find, child, climb
+
+  // apple, little, table — 끝의 le는 한 덩어리로 "을"
+  const n = chunks.length;
+  if (/[bcdfgkpstvz]le$/.test(w) && n >= 2 && chunks[n - 2].text === 'l' && chunks[n - 1].text === 'e') {
+    chunks.splice(n - 2, 2, { text: 'le', sound: 'l' });
+  }
+  return chunks;
+}
+
 function applyBlendExceptions(w, chunks) {
   if (OO_SHORT_WORDS.test(w)) {
     for (const c of chunks) if (c.text === 'oo') c.sound = 'oo-short';
@@ -304,7 +346,7 @@ function applyBlendExceptions(w, chunks) {
   if (TH_VOICED_WORDS.test(w)) {
     for (const c of chunks) if (c.text === 'th') c.sound = 'th-voiced';
   }
-  return chunks;
+  return applySilentLetters(w, chunks);
 }
 
 // ============================================================

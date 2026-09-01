@@ -105,6 +105,11 @@
 }
 .pc-ko { font-size: 1.6rem; font-weight: 800; color: #2b3a55; }
 .pc-tip { font-size: 1rem; color: #6b7285; word-break: keep-all; text-align: center; }
+.pc-alone {
+  font-size: 0.92rem; color: #7a6a4f; line-height: 1.6;
+  background: #fdf6e6; border-radius: 12px; padding: 10px 14px;
+  max-width: 480px; word-break: keep-all; text-align: center;
+}
 
 .pc-main-btn {
   border: none; border-radius: 16px; padding: 15px 34px; min-height: 56px;

@@ -62,7 +62,10 @@ export async function uploadPhonicsSound(fileName, base64) {
     data: base64,
     updatedAt: new Date().toISOString(),
   });
-  await cacheSet(fileName, b64ToBytes(base64)); // 올린 즉시 캐시에도
+  const bytes = b64ToBytes(base64);
+  await cacheSet(fileName, bytes);   // 올린 즉시 캐시에도
+  memCache.set(fileName, bytes);     // "없음"으로 기록돼 있던 것을 덮어씀
+  decoded.delete(fileName);          // 다음 재생 때 새로 디코딩
 }
 
 // 등록된 음원 파일명 목록
@@ -77,6 +80,7 @@ export async function listPhonicsSounds() {
 const memCache = new Map(); // 파일명 → Uint8Array (세션 메모리)
 let ctx = null;
 let curSource = null;
+let curFinish = null;   // 재생 중인 소리를 끝내는 함수 (멈춤 처리용)
 
 function audioCtx() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
@@ -100,33 +104,79 @@ async function getBytes(fileName) {
   return bytes;
 }
 
-/** 파닉스 소리 재생. 성공하면 true */
-export async function playPhonicsSound(fileName) {
-  if (!fileName) return false;
+// 디코딩까지 끝난 오디오 (재생 직전 지연을 없애기 위해 미리 준비)
+const decoded = new Map(); // 파일명 → AudioBuffer | null
+
+async function getBuffer(fileName) {
+  if (decoded.has(fileName)) return decoded.get(fileName);
   const bytes = await getBytes(fileName);
-  if (!bytes) return false;
+  if (!bytes) { decoded.set(fileName, null); return null; }
   try {
     const c = audioCtx();
     const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
     const audio = await c.decodeAudioData(buf);
+    decoded.set(fileName, audio);
+    return audio;
+  } catch (e) {
+    decoded.set(fileName, null);
+    return null;
+  }
+}
+
+/**
+ * 쓸 음원을 미리 내려받아 디코딩까지 해 둠
+ * (이어 읽기처럼 조각을 연달아 재생할 때 첫 소리가 밀리지 않게)
+ */
+export async function preloadPhonicsSounds(fileNames = []) {
+  const uniq = [...new Set(fileNames.filter(Boolean))];
+  await Promise.all(uniq.map(f => getBuffer(f).catch(() => null)));
+}
+
+/**
+ * 파닉스 소리 재생. 성공하면 true
+ * @param fileName 음원 파일명
+ * @param onStart  실제로 소리가 나기 시작할 때 호출 (화면 강조를 소리에 맞추기 위함)
+ *
+ * 끝나는 시점은 onended가 아니라 "버퍼 길이 + 스피커 출력 지연"으로 계산한다.
+ * onended는 오디오 그래프 기준이라 블루투스·태블릿에서 실제 소리보다 먼저 온다.
+ */
+export async function playPhonicsSound(fileName, onStart) {
+  if (!fileName) return false;
+  const audio = await getBuffer(fileName);
+  if (!audio) return false;
+  try {
+    const c = audioCtx();
     stopPhonicsSound();
     const src = c.createBufferSource();
     src.buffer = audio;
     src.connect(c.destination);
     curSource = src;
+
+    const lead = 0.02;                                   // 예약 여유
+    const latency = c.outputLatency || c.baseLatency || 0; // 스피커까지 걸리는 시간
+    const startAt = c.currentTime + lead;
+    src.start(startAt);
+    if (onStart) setTimeout(onStart, (lead + latency) * 1000); // 소리와 강조를 맞춤
+
     return await new Promise((resolve) => {
       let done = false;
-      const finish = (v) => { if (done) return; done = true; curSource = null; resolve(v); };
-      src.onended = () => finish(true);
-      src.start(0);
-      // onended가 오지 않는 경우 대비 (버퍼 길이 + 1초)
-      setTimeout(() => finish(true), (audio.duration + 1) * 1000);
+      const finish = () => {
+        if (done) return;
+        done = true;
+        curSource = null;
+        curFinish = null;
+        resolve(true);
+      };
+      curFinish = finish;                                  // 중간에 멈추면 바로 끝냄
+      const endsIn = lead + audio.duration + latency + 0.08; // 여운 조금
+      setTimeout(finish, endsIn * 1000);
     });
   } catch (e) { return false; }
 }
 
 export function stopPhonicsSound() {
   if (curSource) { try { curSource.stop(); } catch (e) { /* */ } curSource = null; }
+  if (curFinish) { const f = curFinish; curFinish = null; f(); } // 대기 중인 재생도 즉시 종료
 }
 
 /** 이 소리가 등록되어 있는지 (버튼 표시 여부 판단용) */

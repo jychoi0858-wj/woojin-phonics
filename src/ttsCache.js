@@ -172,7 +172,13 @@ export function playCachedAudio(audioData) {
       _currentSource = source;
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
-      source.onended = () => { _currentSource = null; resolve(); };
+      // onended는 오디오 그래프 기준이라 실제로 스피커에서 소리가 끝나기 전에 온다.
+      // (블루투스·태블릿에서 특히 큼) 출력 지연만큼 늦춰서 끝난 것으로 본다.
+      const latencyMs = Math.round(((ctx.outputLatency || ctx.baseLatency || 0) + 0.06) * 1000);
+      source.onended = () => {
+        _currentSource = null;
+        setTimeout(resolve, latencyMs);
+      };
       source.start(0);
     } catch (e) {
       // AudioContext 실패 시 Audio 엘리먼트 폴백
