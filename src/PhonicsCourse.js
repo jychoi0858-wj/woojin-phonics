@@ -378,11 +378,12 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
       await playPhonicsSequence(items, (i) => setBlendActive(i));
       if (abortRef.current) break;
       setBlendActive(-1);
-      await sleep(fast ? 200 : 300);
+      // 마지막 패스 뒤에는 거의 쉬지 않는다 — 조각 소리에서 단어로 바로 이어지게
+      await sleep(fast ? 60 : 300);
     }
     if (!abortRef.current) {
       setBlendPass(3);                       // 조각이 하나로 합쳐짐
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 110));
       if (speak && !abortRef.current) await speak(blendWord);
     }
     end(t);
