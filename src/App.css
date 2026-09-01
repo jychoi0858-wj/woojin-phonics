@@ -3674,6 +3674,16 @@
     box-shadow: 0 1px 0 #3a5fad;
 }
 
+/* 파닉스 학습 화면 — 소리 목록이 길어서 세로 스크롤이 필요 */
+.learning-main.phonics-main {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;   /* flex 자식이 줄어들 수 있어야 내부에서 스크롤됨 */
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
 .sl-admin-btn.phonics-entry {
     background: #e2640f;
     box-shadow: 0 3px 0 #b34e0b;

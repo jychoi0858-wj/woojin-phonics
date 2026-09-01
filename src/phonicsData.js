@@ -170,6 +170,62 @@ export function aloneNote(soundId) {
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────
+// 이어 읽기(블렌딩)에서 조각마다 붙는 설명
+//   배우는 소리가 a여도, lamb에는 "울"처럼 들리는 l과 묵음 b가 함께 나온다.
+//   아이가 "왜 저래?" 하고 막히지 않게 조각별로 짧게 알려 준다.
+// ─────────────────────────────────────────────────────────────
+const SILENT_NOTE = {
+  e: '끝의 e는 소리를 내지 않아요. 대신 앞의 모음을 이름 소리로 길게 만들어 줘요.',
+  b: 'm 뒤의 b는 소리를 내지 않아요. (lamb, comb, thumb)',
+  n: 'm 뒤의 n은 소리를 내지 않아요. (autumn)',
+  l: '여기 l은 소리를 내지 않아요. (walk, half, calm)',
+};
+
+const DIGRAPHS = ['sh', 'ch', 'th', 'ng', 'ck', 'qu', 'wh', 'ph', 'kn', 'gn', 'wr', 'igh', 'tch', 'dge'];
+const DOUBLES = ['ll', 'ss', 'ff', 'zz', 'tt', 'dd', 'pp', 'bb', 'gg', 'nn', 'mm', 'rr', 'cc'];
+const VOWEL_TEAMS = ['ai', 'ay', 'ea', 'ee', 'ey', 'ie', 'oa', 'oe', 'oi', 'oy', 'ou', 'ow', 'oo', 'ue', 'ui', 'au', 'aw'];
+const R_CONTROLLED = ['ar', 'er', 'ir', 'or', 'ur', 'air', 'ear', 'are', 'ure'];
+
+/**
+ * 조각 하나에 대한 설명 (설명할 게 없으면 null)
+ * @param chunk  { text, sound, silent }
+ * @param i      조각 위치
+ * @param chunks 전체 조각
+ */
+export function chunkNote(chunk, i, chunks = []) {
+  const t = chunk.text;
+  if (chunk.silent) return SILENT_NOTE[t] || `${t}는 소리를 내지 않아요.`;
+
+  // 소리로 먼저 판단해야 하는 것들 (같은 글자라도 소리가 다름)
+  if (chunk.sound === 'th-voiced') return '이 th는 목이 울려요. thin의 바람 소리 th와 달라요.';
+  if (chunk.sound === 'th') return 'th는 혀를 살짝 물고 바람만 내보내요.';
+  if (chunk.sound === 'oo-short') return '여기 oo는 짧게 "우"예요. moon의 긴 "우-"와 달라요.';
+  if (chunk.sound === 'oo-long') return '여기 oo는 길게 "우-"예요. book의 짧은 "우"와 달라요.';
+  if (R_CONTROLLED.includes(t)) return `${t}는 r이 앞 모음의 소리를 바꿔 놓은 소리예요.`;
+
+  if (DOUBLES.includes(t)) return `${t}은 같은 글자가 둘이지만 소리는 한 번만 나요.`;
+  if (t === 'le') return '끝의 le는 "을"처럼 한 덩어리로 소리 나요.';
+  if (DIGRAPHS.includes(t)) return `${t}는 두 글자가 모여 하나의 소리를 내요.`;
+  if (VOWEL_TEAMS.includes(t)) return `${t}는 모음 둘이 모여 하나의 소리를 내요.`;
+  if (chunk.sound === 'soft-c') return 'e, i, y 앞이라 c가 "크"가 아니라 "스"로 나요.';
+  if (chunk.sound === 'soft-g') return 'e, i, y 앞이라 g가 "그"가 아니라 "즈"로 나요.';
+  if (chunk.sound === 'yoo') return '여기 u는 알파벳 이름 그대로 "유"로 나요.';
+  if (chunk.sound === 'aw' && t === 'a') return 'l 앞의 a는 "애"가 아니라 "오-"로 나요.';
+
+  // 매직 e 덕분에 길어진 모음
+  const hasSilentE = chunks.some(c => c.silent && c.text === 'e');
+  if (hasSilentE && t.length === 1 && 'aeiou'.includes(t) && /^long-/.test(chunk.sound || '')) {
+    return `끝의 e 덕분에 ${t}가 이름 소리로 길어졌어요.`;
+  }
+
+  // 혼자 들으면 헷갈리는 자음 (뒤에 모음이 오면 붙어서 달라짐)
+  if (ALONE_NOTE[chunk.sound] && ['l', 'r', 'w', 'y'].includes(chunk.sound)) {
+    return ALONE_NOTE[chunk.sound];
+  }
+  return null;
+}
+
 /** 이 앱이 가르치는 모든 소리 id */
 export const ALL_SOUNDS = STAGES.flatMap(s => s.sounds);
 

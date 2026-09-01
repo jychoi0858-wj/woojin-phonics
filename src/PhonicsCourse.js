@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { STAGES, SOUND_INFO, aloneNote } from './phonicsData';
-import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes } from './phonics';
+import { STAGES, SOUND_INFO, aloneNote, chunkNote } from './phonicsData';
+import { soundFile, wordsForSound, wordsWithoutSound, marksForSound, splitGraphemes, wordHasSound } from './phonics';
+import { customWordsOf, addCustomWord, removeCustomWord } from './phonicsWords';
 import PronunceCheck from './PronunceCheck';
 import { playPhonicsSound, stopPhonicsSound, preloadPhonicsSounds } from './phonicsAudio';
 import { loadProgress, recordSound, starsOf, stageRatio, nextSound } from './phonicsProgress';
@@ -151,6 +152,103 @@ export default function PhonicsCourse({ allWords = [], speak, stop, azureKey, az
 }
 
 // ============================================================
+// 연습 단어 추가 팝업
+//   등록된 단어와 기본 예시에서 골라 넣거나, 직접 타이핑해서 넣는다.
+// ============================================================
+function AddWordModal({ soundId, info, allWords = [], myWords = [], speak, onChange, onClose }) {
+  const [q, setQ] = useState('');
+  const [saying, setSaying] = useState('');
+  const typed = q.toLowerCase().trim().replace(/[^a-z' -]/g, '');
+
+  // 고를 수 있는 후보 — 등록된 단어 + 이 소리의 기본 예시 (이미 넣은 건 제외)
+  const candidates = useMemo(() => {
+    const seen = new Set(myWords);
+    const out = [];
+    for (const w of [...allWords, ...(info.words || [])]) {
+      const n = (w || '').toLowerCase().trim();
+      if (!n || n.length < 2 || seen.has(n)) continue;
+      if (!wordHasSound(n, soundId)) continue;   // 이 소리가 없는 단어는 후보에서 뺌
+      seen.add(n);
+      out.push(n);
+    }
+    return out;
+  }, [allWords, info.words, myWords, soundId]);
+
+  const shown = useMemo(() => {
+    if (!typed) return candidates.slice(0, 24);
+    return candidates.filter(w => w.includes(typed)).slice(0, 24);
+  }, [candidates, typed]);
+
+  const canTypeIn = typed.length >= 2 && !myWords.includes(typed) && !shown.includes(typed);
+  const typedHasSound = canTypeIn ? wordHasSound(typed, soundId) : true;
+
+  const add = (w) => { onChange(addCustomWord(soundId, w)); setQ(''); };
+  const drop = (w) => onChange(removeCustomWord(soundId, w));
+  const preview = async (w) => {
+    if (!speak || saying) return;
+    setSaying(w);
+    try { await speak(w); } catch (e) { /* ignore */ }
+    setSaying('');
+  };
+
+  return (
+    <div className="pc-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="pc-add-modal">
+        <div className="pc-add-head">
+          <span>➕ <b>{info.label}</b> 소리 연습 단어</span>
+          <button className="pc-close" onClick={onClose}>✕</button>
+        </div>
+
+        <input
+          className="pc-add-input"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="영어 단어를 입력해 찾거나 새로 넣어요"
+          autoFocus
+        />
+
+        {canTypeIn && (
+          <button className={`pc-add-typed ${typedHasSound ? '' : 'warn'}`} onClick={() => add(typed)}>
+            ➕ <b>{typed}</b> 넣기
+            {!typedHasSound && <em>이 단어에서는 {info.label} 소리를 찾지 못했어요. 그래도 넣을 수 있어요.</em>}
+          </button>
+        )}
+
+        {myWords.length > 0 && (
+          <>
+            <div className="pc-add-label">내가 넣은 단어</div>
+            <div className="pc-add-list">
+              {myWords.map(w => (
+                <span className="pc-add-chip mine" key={w}>
+                  <button className="pc-chip-say" onClick={() => preview(w)} disabled={!!saying}>
+                    {saying === w ? '🔊' : '🔉'}
+                  </button>
+                  {w}
+                  <button className="pc-chip-del" onClick={() => drop(w)}>✕</button>
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="pc-add-label">
+          {typed ? `"${typed}" 로 찾은 단어` : '등록된 단어와 기본 예시에서 고르기'}
+        </div>
+        <div className="pc-add-list">
+          {shown.length === 0 ? (
+            <span className="pc-add-empty">찾은 단어가 없어요. 위에 직접 입력해 보세요.</span>
+          ) : shown.map(w => (
+            <button className="pc-add-chip" key={w} onClick={() => add(w)}>+ {w}</button>
+          ))}
+        </div>
+
+        <button className="pc-next-btn" onClick={onClose}>다 넣었어요</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // 한 소리 학습: ① 소리 듣기 → ② 귀로 찾기 → ③ 눈으로 찾기
 // ============================================================
 const EAR_ROUNDS = 3;
@@ -161,10 +259,15 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
   const info = SOUND_INFO[soundId] || { label: soundId, ko: '', tip: '', words: [] };
   const file = soundFile(soundId);
 
-  // 이 소리가 든 단어 (아이가 배운 단어 우선) + 오답용 단어
+  // 직접 추가한 단어 (부모가 넣은 것 — 가장 먼저 씀)
+  const [myWords, setMyWords] = useState(() => customWordsOf(soundId));
+  const [showAdd, setShowAdd] = useState(false);
+  useEffect(() => { setMyWords(customWordsOf(soundId)); }, [soundId]);
+
+  // 이 소리가 든 단어 (직접 추가 → 아이가 배운 단어 → 기본 예시)
   const targets = useMemo(
-    () => wordsForSound(soundId, allWords, info.words, 8),
-    [soundId, allWords, info.words]
+    () => wordsForSound(soundId, [...myWords, ...allWords], info.words, 8),
+    [soundId, myWords, allWords, info.words]
   );
   const distractors = useMemo(
     () => wordsWithoutSound(soundId, shuffle([...allWords, ...DISTRACTOR_POOL]), 24),
@@ -275,6 +378,29 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
     end(t);
   };
 
+  // 조각마다 알아 둘 점 (설명할 게 있는 조각만)
+  const blendNotes = useMemo(() => {
+    return blendChunks
+      .map((ch, i) => ({ i, text: chunkNote(ch, i, blendChunks) }))
+      .filter(n => n.text);
+  }, [blendChunks]);
+
+  // 조각 하나만 눌러서 소리 듣기
+  const playChunk = async (ch, ci) => {
+    if (busy) { stopAll(); return; }
+    const t = begin('chunk' + ci);
+    setBlendActive(ci);
+    if (ch.sound) {
+      const ok = await playPhonicsSound(soundFile(ch.sound), () => setBlendActive(ci));
+      if (!ok) setNoFile(true);
+    } else {
+      await new Promise(r => setTimeout(r, 400));   // 묵음 조각
+    }
+    if (!abortRef.current) await new Promise(r => setTimeout(r, 150));
+    setBlendActive(-1);
+    end(t);
+  };
+
   const gotoBlendWord = (i) => {
     stopAll();
     setBlendIdx(i);
@@ -354,7 +480,10 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
           )}
           {noFile && <div className="pc-nofile">아직 이 소리의 음원이 등록되지 않았어요. (설정에서 올릴 수 있어요)</div>}
 
-          <div className="pc-sub">이 소리가 들어간 단어예요</div>
+          <div className="pc-sub">
+            이 소리가 들어간 단어예요
+            <button className="pc-add-word" onClick={() => { stopAll(); setShowAdd(true); }}>➕ 단어 추가</button>
+          </div>
           <div className="pc-word-row">
             {targets.slice(0, 4).map((w, i) => {
               const marks = marksForSound(w, soundId);
@@ -376,6 +505,18 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
           <button className="pc-next-btn" onClick={() => { stopAll(); setPicked(null); gotoBlendWord(0); setStep('blend'); }}>
             다 들었어요 →
           </button>
+
+          {showAdd && (
+            <AddWordModal
+              soundId={soundId}
+              info={info}
+              allWords={allWords}
+              myWords={myWords}
+              speak={speak}
+              onChange={setMyWords}
+              onClose={() => setShowAdd(false)}
+            />
+          )}
         </div>
       )}
 
@@ -383,19 +524,36 @@ function PhonicsLesson({ soundId, allWords, speak, stop, azureKey, azureRegion, 
       {step === 'blend' && blendWord && (
         <div className="pc-panel">
           <div className="pc-q">소리를 이어 붙이면 단어가 돼요</div>
-          <div className="pc-q-hint">조각이 하나씩 소리 나고, 점점 빨라지다 한 단어가 돼요.</div>
+          <div className="pc-q-hint">조각이 하나씩 소리 나고, 점점 빨라지다 한 단어가 돼요. 조각을 눌러 하나씩 들어 볼 수도 있어요.</div>
 
           <div className={`pc-blend pass${blendPass < 0 ? 0 : blendPass}`}>
             {blendChunks.map((ch, ci) => (
-              <span
+              <button
                 key={ci}
-                className={`pc-chunk ${ch.silent ? 'silent' : ''} ${blendActive === ci ? 'active' : ''}`}
+                className={`pc-chunk ${ch.silent ? 'silent' : ''} ${blendActive === ci ? 'active' : ''} ${ch.sound === soundId ? 'target' : ''}`}
+                onClick={() => playChunk(ch, ci)}
+                disabled={!!busy && busy !== 'chunk' + ci}
+                title="눌러서 이 조각 소리만 듣기"
               >
                 {ch.text}
-              </span>
+              </button>
             ))}
           </div>
           {blendPass === 3 && <div className="pc-blend-word">{blendWord}</div>}
+
+          {/* 조각마다 알아 둘 점 — 묵음, 겹자음, 혼자 낼 때 다른 소리 등 */}
+          {blendNotes.length > 0 && (
+            <div className="pc-chunk-notes">
+              {blendNotes.map(n => (
+                <div className={`pc-chunk-note ${blendActive === n.i ? 'on' : ''}`} key={n.i}>
+                  <span className={`pc-note-chunk ${blendChunks[n.i].silent ? 'silent' : ''}`}>
+                    {blendChunks[n.i].text}
+                  </span>
+                  <span className="pc-note-text">{n.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="pc-blend-btns">
             {busy === 'blend' ? (

@@ -3120,7 +3120,7 @@ function App() {
 
       {/* ===== 파닉스 학습 화면 ===== */}
       {screen === 'phonics' && (
-        <main className="learning-main" style={{ display: 'block' }}>
+        <main className="learning-main phonics-main">
           <PhonicsCourse
             allWords={flattenAllDays(data).flatMap(d => d.words || [])}
             speak={speakWordSimple}
