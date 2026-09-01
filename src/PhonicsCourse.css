@@ -49,7 +49,11 @@
 /* ── 소리 지도 ── */
 .pc-stages { display: flex; flex-direction: column; gap: 10px; }
 .pc-stage { background: #f7f9fd; border-radius: 16px; padding: 10px 12px; }
-.pc-stage.locked { opacity: 0.55; }
+.pc-stage-arrow {
+  font-size: 1.1rem; color: #a8adba; flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.pc-stage-arrow.open { transform: rotate(180deg); }
 
 .pc-stage-head {
   display: flex; align-items: center; gap: 12px; width: 100%;

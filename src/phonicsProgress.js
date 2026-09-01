@@ -33,16 +33,9 @@ export function starsOf(prog, soundId) {
   return (prog[soundId] && prog[soundId].stars) || 0;
 }
 
-/**
- * 단계가 열려 있는가
- *   1단계는 항상 열림. 그다음부터는 앞 단계 소리의 절반 이상에서 별을 받아야 열림.
- */
-export function isStageOpen(prog, stageId) {
-  if (stageId <= 1) return true;
-  const prev = STAGES.find(s => s.id === stageId - 1);
-  if (!prev) return true;
-  const done = prev.sounds.filter(id => starsOf(prog, id) > 0).length;
-  return done >= Math.ceil(prev.sounds.length / 2);
+/** 모든 단계를 언제든 고를 수 있음 (잠금 없음) */
+export function isStageOpen() {
+  return true;
 }
 
 /** 단계 진행률 (0~1) */
@@ -55,7 +48,6 @@ export function stageRatio(prog, stage) {
 /** 아직 별이 없는 소리 중 가장 앞에 있는 것 (이어서 하기) */
 export function nextSound(prog) {
   for (const stage of STAGES) {
-    if (!isStageOpen(prog, stage.id)) return null;
     const found = stage.sounds.find(id => starsOf(prog, id) === 0);
     if (found) return { stageId: stage.id, soundId: found };
   }

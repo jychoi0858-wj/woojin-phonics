@@ -2639,8 +2639,11 @@ function App() {
             <span className="user-name">{displayName || currentUser.username}</span>
             <button className="logout-btn" onClick={logoutUser}>로그아웃</button>
           </div>
-          {['learning', 'sentence', 'memorize', 'reading', 'shoot'].includes(screen) ? (
+          {['learning', 'phonics', 'sentence', 'memorize', 'reading', 'shoot'].includes(screen) ? (
             <>
+              <button className={`header-btn phonics ${screen === 'phonics' ? 'current' : ''}`} onClick={() => setScreen('phonics')}>
+                🔤 파닉스
+              </button>
               <button className={`header-btn home ${screen === 'learning' ? 'current' : ''}`} onClick={() => setScreen('learning')}>
                 🍎 단어학습
               </button>
@@ -2744,13 +2747,6 @@ function App() {
                 speak={speakWordSimple}
                 getImage={getImageUrl}
                 onWordResult={recordWordResult}
-                onClose={() => setLearnView('home')}
-              />
-            ) : learnView === 'phonics' ? (
-              <PhonicsCourse
-                allWords={flattenAllDays(data).flatMap(d => d.words || [])}
-                speak={speakWordSimple}
-                stop={stopWordPlay}
                 onClose={() => setLearnView('home')}
               />
             ) : (
@@ -2997,10 +2993,6 @@ function App() {
                 <span className="msg-text">위에서 Lesson을 선택해 주세요!</span>
               </div>
             )}
-            {/* 파닉스는 Lesson과 상관없이 언제든 할 수 있음 */}
-            <button className="sl-admin-btn phonics-entry" onClick={() => setLearnView('phonics')}>
-              🔤 파닉스 학습
-            </button>
             <button className="sl-admin-btn find-word-btn" onClick={() => setShowFindWord(true)}>
               🔍 단어 찾기
             </button>
@@ -3124,6 +3116,18 @@ function App() {
           currentUser={currentUser}
           ttsLimitReached={userUsage.speechChars >= TTS_LIMIT}
         />
+      )}
+
+      {/* ===== 파닉스 학습 화면 ===== */}
+      {screen === 'phonics' && (
+        <main className="learning-main" style={{ display: 'block' }}>
+          <PhonicsCourse
+            allWords={flattenAllDays(data).flatMap(d => d.words || [])}
+            speak={speakWordSimple}
+            stop={stopWordPlay}
+            onClose={() => setScreen('learning')}
+          />
+        </main>
       )}
 
       {/* ===== Slice Word Game Screen (단어 베기) ===== */}

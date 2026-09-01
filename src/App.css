@@ -6731,6 +6731,23 @@
     box-shadow: 0 1px 0 #4a5cc5;
 }
 
+.header-btn.phonics {
+    background: #e2640f;
+    color: white;
+    box-shadow: 0 3px 0 #b34e0b;
+}
+
+.header-btn.phonics:hover {
+    background: #cf5a0c;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #b34e0b;
+}
+
+.header-btn.phonics:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #b34e0b;
+}
+
 .header-btn.slice {
     background: #2e9e5b;
     color: white;

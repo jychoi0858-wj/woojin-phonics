@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { STAGES, SOUND_INFO } from './phonicsData';
 import { soundFile, wordsForSound, wordsWithoutSound, marksForSound } from './phonics';
 import { playPhonicsSound, stopPhonicsSound } from './phonicsAudio';
-import { loadProgress, recordSound, starsOf, isStageOpen, stageRatio, nextSound } from './phonicsProgress';
+import { loadProgress, recordSound, starsOf, stageRatio, nextSound } from './phonicsProgress';
 import useBackHandler from './useBackHandler';
 import './PhonicsCourse.css';
 
@@ -18,6 +18,33 @@ const shuffle = (arr) => {
 // 오답 보기로 쓸 단어 풀 (다른 소리들의 예시 단어)
 const DISTRACTOR_POOL = Object.values(SOUND_INFO).flatMap(v => v.words);
 
+// ─── 정답·오답 효과음 (음원 파일 없이 그 자리에서 만들어 냄) ───
+let sfxCtx = null;
+function sfx(kind) {
+  try {
+    if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+    if (sfxCtx.state === 'suspended') sfxCtx.resume();
+    const now = sfxCtx.currentTime;
+    const right = kind === 'right';
+    const notes = right ? [784, 988, 1319] : [311, 233];   // 도미솔 느낌 / 낮게 두 번
+    const step = right ? 0.085 : 0.16;
+    const len = right ? 0.22 : 0.28;
+    notes.forEach((freq, i) => {
+      const osc = sfxCtx.createOscillator();
+      const gain = sfxCtx.createGain();
+      osc.type = right ? 'sine' : 'triangle';
+      osc.frequency.value = freq;
+      const t0 = now + i * step;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(right ? 0.22 : 0.18, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      osc.connect(gain); gain.connect(sfxCtx.destination);
+      osc.start(t0);
+      osc.stop(t0 + len + 0.05);
+    });
+  } catch (e) { /* ignore */ }
+}
+
 /**
  * 파닉스 학습
  * props:
@@ -28,7 +55,8 @@ const DISTRACTOR_POOL = Object.values(SOUND_INFO).flatMap(v => v.words);
  */
 export default function PhonicsCourse({ allWords = [], speak, stop, onClose }) {
   const [prog, setProg] = useState(loadProgress);
-  const [openStage, setOpenStage] = useState(1);
+  // 처음 열 때는 아직 안 한 소리가 있는 단계를 펼쳐 둠
+  const [openStage, setOpenStage] = useState(() => (nextSound(loadProgress()) || {}).stageId || 1);
   const [lesson, setLesson] = useState(null);   // { soundId } | null
 
   const cont = useMemo(() => nextSound(prog), [prog]);
@@ -75,28 +103,26 @@ export default function PhonicsCourse({ allWords = [], speak, stop, onClose }) {
 
       <div className="pc-stages">
         {STAGES.map(stage => {
-          const open = isStageOpen(prog, stage.id);
           const ratio = stageRatio(prog, stage);
           const expanded = openStage === stage.id;
           return (
-            <div className={`pc-stage ${open ? '' : 'locked'}`} key={stage.id}>
+            <div className="pc-stage" key={stage.id}>
               <button
                 className="pc-stage-head"
-                onClick={() => open && setOpenStage(expanded ? -1 : stage.id)}
+                onClick={() => setOpenStage(expanded ? -1 : stage.id)}
               >
-                <span className="pc-stage-icon">{open ? stage.icon : '🔒'}</span>
+                <span className="pc-stage-icon">{stage.icon}</span>
                 <span className="pc-stage-name">
                   <b>{stage.id}. {stage.name}</b>
-                  <em>{open ? stage.desc : '앞 단계를 절반 이상 끝내면 열려요'}</em>
+                  <em>{stage.desc}</em>
                 </span>
                 <span className="pc-stage-ratio">
                   {stage.sounds.filter(id => starsOf(prog, id) > 0).length}/{stage.sounds.length}
                 </span>
+                <span className={`pc-stage-arrow ${expanded ? 'open' : ''}`}>▾</span>
               </button>
-              {open && (
-                <div className="pc-stage-bar"><i style={{ width: `${Math.round(ratio * 100)}%` }} /></div>
-              )}
-              {open && expanded && (
+              <div className="pc-stage-bar"><i style={{ width: `${Math.round(ratio * 100)}%` }} /></div>
+              {expanded && (
                 <div className="pc-sounds">
                   {stage.sounds.map(id => {
                     const info = SOUND_INFO[id];
@@ -176,7 +202,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
       if (abortRef.current) break;
       ok = await playPhonicsSound(file);
       if (!ok) break;
-      if (i < times - 1) await new Promise(r => setTimeout(r, 700));
+      if (i < times - 1) await new Promise(r => setTimeout(r, 2000)); // 따라 할 시간
     }
     if (!ok) setNoFile(true);
     end(t);
@@ -216,6 +242,7 @@ function PhonicsLesson({ soundId, allWords, speak, stop, onDone, onQuit }) {
 
   const answer = (isRight, autoNext = true) => {
     setPicked(isRight ? 'right' : 'wrong');
+    sfx(isRight ? 'right' : 'wrong');
     if (isRight) setCorrect(c => c + 1);
     if (!autoNext) return;
     setTimeout(() => {
